@@ -11,18 +11,20 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 import time
 import numpy as np
-import mplhep as mhep
-plt.style.use(mhep.style.CMS)
 import skhep.math as hep
 import os
 from functools import reduce
 from matplotlib.colors import LogNorm
+from pathlib import Path
 #from sklearn.preprocessing import MinMaxScaler
 from scipy.stats import wasserstein_distance
 import awkward as ak
 import random
 from coffea.nanoevents.methods import vector
 ak.behavior.update(vector.behavior)
+import mplhep as mhep
+
+plt.style.use(mhep.style.CMS)
 
 torch.autograd.set_detect_anomaly(True)
 
@@ -32,7 +34,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="LSTM implementation ")
 
     # Dataset setting
-    parser.add_argument('--config', type=str, help='Configuration file')
+    parser.add_argument('--config', type=str, default='config/config_default.json', help='Configuration file')
     parser.add_argument('--dataset', type=str, help='Path to dataset')
     parser.add_argument('--load', type=str, help='this param load model')
 
@@ -47,9 +49,6 @@ def main():
     # load configurations of model and others
     configs = json.load(open(args.config, 'r'))
 
-    output_bin = configs['paths']['bin_dir']
-    print("teste de json:")
-    print(output_bin)
     # Hyperparameters
     # Input data specific params
     num_particles = configs['physics']['num_particles']
@@ -62,7 +61,7 @@ def main():
     saving_epoch = configs['training']['saving_epoch']
     n_filter = configs['training']['n_filter']
     n_classes = configs['training']['n_classes']
-    latent_dim_seq = [30]
+    latent_dim_seq = [configs['training']['latent_dim_seq']]
     beta = configs['training']['beta'] # equivalent to beta=5000 in the old setup
 
     # Regularizer for loss penalty
@@ -97,9 +96,9 @@ def main():
     #print(seed)
 
     ####################################### LOAD DATA #######################################
-    train_dataset = torch.load('/data/convae_jet/datasets/train_data_pxpypz_g_min30p.pt')
-    valid_dataset = torch.load('/data/convae_jet/datasets/valid_data_pxpypz_g_min30p.pt')
-    test_dataset = torch.load('/data/convae_jet/datasets/test_data_pxpypz_g_min30p.pt')
+    train_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['train_dataset']))
+    valid_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['valid_dataset']))
+    test_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['test_dataset']))
 
     #train_dataset = train_dataset[:int((len(train_dataset))/10),:,:]
     #valid_dataset = valid_dataset[:int((len(valid_dataset))/10),:,:]
@@ -155,10 +154,18 @@ def main():
     for latent_dim in latent_dim_seq:
 
         model_name = '_test_generation_originaltest_fulldata_'+str(latent_dim)+'latent_'+str(n_filter)+'filters_'+str(n_epochs)+'epochs_0p0to1p0_sparse_nnd_beta0p9998_train_evaluatemin'+str(num_particles)+'p_jetpt_jetmass_'
-
         dir_name='generation_beta0p9998_dir_second'+model_name+'test'
 
-        os.system('mkdir -p /data/jfialho/sprace-ml-project/ConVAE_Jet/jets/'+str(dir_name))
+        cur_jets_dir = os.path.join(configs['paths']['jets_dir'], dir_name)
+        cur_report_dir = os.path.join(configs['paths']['report_dir'], dir_name)
+        cur_model_dir = os.path.join(configs['paths']['model_dir'], dir_name)
+
+        # create folder recursively
+        Path(cur_jets_dir).mkdir(parents=True, exist_ok=True)
+        Path(cur_report_dir).mkdir(parents=True, exist_ok=True)
+        Path(cur_model_dir).mkdir(parents=True, exist_ok=True)
+
+        #os.system('mkdir -p /data/jfialho/sprace-ml-project/ConVAE_Jet/jets/'+str(dir_name))
 
         # Create iterable data loaders
         train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
@@ -509,7 +516,7 @@ def main():
                     plt.ylabel('A. U.')
                     plt.title('Loss Function Components')
                     plt.legend()
-                    plt.savefig('pxpypz_standardized_beta01_latent20' + str(model_name) + '.pdf')
+                    plt.savefig(os.path.join(cur_report_dir, 'pxpypz_standardized_beta01_latent20' + str(model_name) + '.pdf'))
                     plt.clf()
 
                 if((epoch+1)==n_epochs or stale_epochs>patience):
@@ -524,7 +531,7 @@ def main():
                     #plt.ylabel('A. U.')
                     plt.title('Dependent Components - NND')
                     plt.legend()
-                    plt.savefig('pxpypz_standardized_loss_components_latent20' + str(model_name) + '.pdf')
+                    plt.savefig(os.path.join(cur_report_dir,'pxpypz_standardized_loss_components_latent20' + str(model_name) + '.pdf'))
                     plt.clf()
 
                 ####################################### EVALUATION #######################################
@@ -729,7 +736,7 @@ def main():
                     plt.xlabel('Particle px (GeV)')
                     plt.yscale('log')
                     plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig('part_px_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'part_px_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     inppy, bins, _ = plt.hist(input_cart[:,1], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
@@ -739,7 +746,7 @@ def main():
                     plt.xlabel('Particle py (GeV)')
                     plt.yscale('log')
                     plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig('part_py_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'part_py_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     inppz, bins, _ = plt.hist(input_cart[:,2], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
@@ -749,7 +756,7 @@ def main():
                     plt.xlabel('Particle pz (GeV)')
                     plt.yscale('log')
                     plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig('part_pz_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'part_pz_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     inppt, bins, _ = plt.hist(input_hadr[:,0], bins=100, range = [0, 1500], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
@@ -759,7 +766,7 @@ def main():
                     plt.xlabel('Particle pt (GeV)')
                     plt.yscale('log')
                     plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig('part_pt_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'part_pt_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     inplowpt, bins, _ = plt.hist(input_hadr[:,0], bins=100, range = [0, 2], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
@@ -769,7 +776,7 @@ def main():
                     plt.xlabel('Particle pt (GeV)')
                     plt.yscale('log')
                     plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig('part_low_pt_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'part_low_pt_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     inpeta, bins, _ = plt.hist(input_hadr[:,1], bins=100, range = [-4, 4], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
@@ -779,7 +786,7 @@ def main():
                     plt.xlabel('Particle eta (GeV)')
                     plt.yscale('log')
                     plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig('part_eta_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'part_eta_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     inpphi, bins, _ = plt.hist(input_hadr[:,2], bins=100, range = [-4, 4], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
@@ -789,7 +796,7 @@ def main():
                     plt.xlabel('Particle phi (GeV)')
                     plt.yscale('log')
                     plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig('part_phi_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'part_phi_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                 def jet_features(jets, mask_bool=False, mask=None):
@@ -915,7 +922,7 @@ def main():
                     plt.xlabel('jet mass (GeV)')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_mass_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_mass_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     ptinp, bins, _ = plt.hist(jets_input_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
@@ -924,7 +931,7 @@ def main():
                     plt.xlabel('jet $p_T$ (GeV)')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_pt_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_pt_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     einp, bins, _ = plt.hist(jets_input_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
@@ -933,7 +940,7 @@ def main():
                     plt.xlabel('$jet energy$ (GeV)')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_energy_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_energy_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     etainp, bins, _ = plt.hist(jets_input_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
@@ -942,7 +949,7 @@ def main():
                     plt.xlabel('jet $\eta$')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_eta_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_eta_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     phiinp, bins, _ = plt.hist(jets_input_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
@@ -951,7 +958,7 @@ def main():
                     plt.xlabel('jet $\phi$')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_phi_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_phi_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     torch.save(model.state_dict(), 'model_pxpypz_standardized_3DLoss_beta01_latent20'+ str(model_name) + '.pt')
@@ -970,7 +977,7 @@ def main():
                     plt.xlabel('jet mass (GeV)')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_gen_mass_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_mass_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     ptinp, bins, _ = plt.hist(jets_input_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
@@ -979,7 +986,7 @@ def main():
                     plt.xlabel('jet $p_T$ (GeV)')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_gen_pt_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_pt_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     einp, bins, _ = plt.hist(jets_input_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
@@ -988,7 +995,7 @@ def main():
                     plt.xlabel('$jet energy$ (GeV)')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_gen_energy_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_energy_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     etainp, bins, _ = plt.hist(jets_input_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
@@ -997,7 +1004,7 @@ def main():
                     plt.xlabel('jet $\eta$')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_gen_eta_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_eta_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
                     phiinp, bins, _ = plt.hist(jets_input_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
@@ -1006,14 +1013,12 @@ def main():
                     plt.xlabel('jet $\phi$')
                     plt.yscale('linear')
                     plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig('jet_gen_phi_GeV'+str(model_name)+'.pdf', format='pdf', bbox_inches='tight')
+                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_phi_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
-                torch.save(output_tensor_emdt,'emdt'+str(model_name)+'.pt')
-                torch.save(output_tensor_emdg,'emdg'+str(model_name)+'.pt')
-
-                os.system('mv emdt'+str(model_name)+'.pt '+str(dir_name))
-                os.system('mv emdg'+str(model_name)+'.pt '+str(dir_name))
+                torch.save(output_tensor_emdt, os.path.join(cur_model_dir, 'emdt'+str(model_name)+'.pt'))
+                torch.save(output_tensor_emdg, os.path.join(cur_model_dir, 'emdg'+str(model_name)+'.pt'))
+)
 
     end_time = time.time()
     print("The total time is ",((end_time-start_time)/60.0)," minutes.")

@@ -1,2 +1,6 @@
 jets/
 norm_flows/
+results/
+logs/
+reports/
+models/
