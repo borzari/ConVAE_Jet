@@ -1018,7 +1018,6 @@ def main():
 
                 torch.save(output_tensor_emdt, os.path.join(cur_model_dir, 'emdt'+str(model_name)+'.pt'))
                 torch.save(output_tensor_emdg, os.path.join(cur_model_dir, 'emdg'+str(model_name)+'.pt'))
-)
 
     end_time = time.time()
     print("The total time is ",((end_time-start_time)/60.0)," minutes.")
