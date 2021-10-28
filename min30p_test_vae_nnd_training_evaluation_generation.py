@@ -127,9 +127,10 @@ def main():
     tr_1_min = torch.min(train_dataset[:,0,1])
     tr_2_min = torch.min(train_dataset[:,0,2])
 
+    #normalization com a flag em config
     train_dataset[:,0,0] = (train_dataset[:,0,0] - tr_0_min)/(tr_0_max - tr_0_min)
     train_dataset[:,0,1] = (train_dataset[:,0,1] - tr_1_min)/(tr_1_max - tr_1_min)
-    train_dataset[:,0,2] = (train_dataset[:,0,2] - tr_2_min)/(tr_2_max - tr_2_min)
+    train_dataset[:,0,2] = (train_dataset[:,0,2] - tr_2_min)/(tr_2_max - tr_2_min) # last update
 
     valid_dataset[:,0,0] = (valid_dataset[:,0,0] - tr_0_min)/(tr_0_max - tr_0_min)
     valid_dataset[:,0,1] = (valid_dataset[:,0,1] - tr_1_min)/(tr_1_max - tr_1_min)
