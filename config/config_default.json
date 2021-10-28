@@ -35,6 +35,8 @@
         "drop_prob": 0.0,
         "seed": 123456789,
         "patience": 1,
+        "num_features": 3,
+        "latent_dim": 30,
 
 
 
