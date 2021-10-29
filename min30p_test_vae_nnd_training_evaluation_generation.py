@@ -395,13 +395,10 @@ def main():
                 py_gen_0 = torch.from_numpy(py_gen)
                 pz_gen_0 = torch.from_numpy(pz_gen)
 
-                def inverse_standardize_t(X, tmin, tmax):
-                    mean = tmin
-                    std = tmax
-                    original_X = ((X * (std - mean)) + mean)
-        #            original_X = ((X * std) + mean)
-                    return original_X
-
+                ######################################################################################
+                # Inverting the initial standardization
+                
+                # Input data
                 px_r = inverse_standardize_t(px, tr_0_min,tr_0_max)
                 py_r = inverse_standardize_t(py, tr_1_min,tr_1_max)
                 pz_r = inverse_standardize_t(pz, tr_2_min,tr_2_max)
@@ -417,61 +414,43 @@ def main():
                 pz_gen_r_0 = inverse_standardize_t(pz_gen_0, tr_2_min,tr_2_max)
 
                 n_jets = px_r.shape[0]
+                
                 ######################################################################################
-                # Masking for input & output constraints
+                # Masking for zero-padded particles
 
-                # Input constraints
-                def mask_zero_padding(input_data):
-                    # Mask input for zero-padded particles. Set to zero values between -10^-4 and 10^-4
-                    px = input_data[:,0,:]
-                    py = input_data[:,1,:]
-                    pz = input_data[:,2,:]
-                    mask_px = ((px <= -0.0001) | (px >= 0.0001))
-                    mask_py = ((py <= -0.0001) | (py >= 0.0001))
-                    mask_pz = ((pz <= -0.0001) | (pz >= 0.0001))
-                    masked_px = (px * mask_px) + 0.0
-                    masked_py = (py * mask_py) + 0.0
-                    masked_pz = (pz * mask_pz) + 0.0
-                    data = torch.stack([masked_px, masked_py, masked_pz], dim=1)
-                    return data
-
+                # Input data
                 inputs = torch.stack([px_r, py_r, pz_r], dim=1)
                 masked_inputs = mask_zero_padding(inputs)
 
                 # Test data
                 outputs_0 = torch.stack([px_reco_r_0, py_reco_r_0, pz_reco_r_0], dim=1)
-                masked_outputs_0 = mask_zero_padding(outputs_0) # Now, values that correspond to the min-pt should be zeroed.
+                masked_outputs_0 = mask_zero_padding(outputs_0)
 
                 # Gen data
                 gen_outputs_0 = torch.stack([px_gen_r_0, py_gen_r_0, pz_gen_r_0], dim=1)
                 masked_gen_outputs_0 = mask_zero_padding(gen_outputs_0)
 
                 ######################################################################################
-                # Output constraints
-                def mask_min_pt(output_data):
-                    # Mask output for min-pt
-                    min_pt_cut = 0.25
-                    mask =  output_data[:,0,:] * output_data[:,0,:] + output_data[:,1,:] * output_data[:,1,:] > min_pt_cut**2
-                    # Expand over the features' dimension
-                    mask = mask.unsqueeze(1)
-                    # Then, you can apply the mask
-                    data_masked = mask * output_data
-                    return data_masked
+                # Masking for min pT cut
 
+                # Input data
                 pt_masked_inputs = mask_min_pt(masked_inputs) # Now, values that correspond to the min-pt should be zeroed.
 
                 # Test data
                 pt_masked_outputs_0 = mask_min_pt(masked_outputs_0) # Now, values that correspond to the min-pt should be zeroed.
 
                 # Gen data
-                pt_masked_gen_outputs_0 = mask_min_pt(masked_gen_outputs_0)
+                pt_masked_gen_outputs_0 = mask_min_pt(masked_gen_outputs_0) # Now, values that correspond to the min-pt should be zeroed.
+                
+                ######################################################################################
 
-
+                # Input data
                 px_r_masked = pt_masked_inputs[:,0,:].detach().cpu().numpy()
                 py_r_masked = pt_masked_inputs[:,1,:].detach().cpu().numpy()
                 pz_r_masked = pt_masked_inputs[:,2,:].detach().cpu().numpy()
                 mass = np.zeros((pz_r_masked.shape[0], num_particles))
 
+                # Input data
                 input_data = np.stack((px_r_masked, py_r_masked, pz_r_masked, mass), axis=2)
 
                 # Test data
@@ -492,27 +471,14 @@ def main():
                 # Gen data
                 gen_output_data_0 = np.stack((px_gen_r_0_masked, py_gen_r_0_masked, pz_gen_r_0_masked, mass_gen_0), axis=2)
 
-                def compute_eta(pz, pt):
-                    eta = np.nan_to_num(np.arcsinh(pz/pt))
-                    return eta
-                def compute_phi(px, py):
-                    phi = np.arctan2(py, px)
-                    return phi
-                def particle_pT(p_part): # input of shape [n_jets, 3_features, n_particles]
-                    p_px = p_part[:, :, 0]
-                    p_py = p_part[:, :, 1]
-                    p_pt = np.sqrt(p_px*p_px + p_py*p_py)
-                    return p_pt
-                def ptetaphim_particles(in_dataset):
-                    part_pt = particle_pT(in_dataset)
-                    part_eta = compute_eta(in_dataset[:,:,2],part_pt)
-                    part_phi = compute_phi(in_dataset[:,:,0],in_dataset[:,:,1])
-                    part_mass = in_dataset[:,:,3]
-                    return np.stack((part_pt, part_eta, part_phi, part_mass), axis=2)
+                ######################################################################################
+                # Changing particles features from cartesian coordinates to cylindrical coordinates -> suitable for particle detector experiment
 
                 hadr_input_data = ptetaphim_particles(input_data)
                 hadr_output_data = ptetaphim_particles(output_data_0)
                 hadr_gen_output_data = ptetaphim_particles(gen_output_data_0)
+                
+                ######################################################################################
 
                 input_cart = np.empty(shape=(0,3))
                 input_hadr = np.empty(shape=(0,3))
@@ -601,23 +567,14 @@ def main():
                     plt.savefig(os.path.join(cur_report_dir,'part_phi_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
-                def jet_features(jets, mask_bool=False, mask=None):
-                    vecs = ak.zip({
-                            "pt": jets[:, :, 0],
-                            "eta": jets[:, :, 1],
-                            "phi": jets[:, :, 2],
-                            "mass": jets[:, :, 3],
-                            }, with_name="PtEtaPhiMLorentzVector")
-
-                    sum_vecs = vecs.sum(axis=1)
-
-                    jf = np.stack((ak.to_numpy(sum_vecs.mass), ak.to_numpy(sum_vecs.pt), ak.to_numpy(sum_vecs.energy), ak.to_numpy(sum_vecs.eta), ak.to_numpy(sum_vecs.phi)), axis=1)
-
-                    return ak.to_numpy(jf)
-
+                ######################################################################################
+                # Calculating jets variables using particles features in cylindrical coordinates
+                   
                 jets_input_data = jet_features(hadr_input_data)
                 jets_output_data = jet_features(hadr_output_data)
                 jets_gen_output_data = jet_features(hadr_gen_output_data)
+                
+                ######################################################################################
 
                 minp, bins, _ = plt.hist(jets_input_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
                 mout = plt.hist(jets_output_data[:,0], bins=100, range=[0, 400], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
