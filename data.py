@@ -117,8 +117,8 @@ def create_loaders(train_dataset, valid_dataset, test_dataset, gen_dataset):
 
 
 def generate_folders():
-    model_name = '_test_generation_originaltest_fulldata_'+str(latent_dim)+'latent_'+str(n_filter)+'filters_'+str(n_epochs)+'epochs_0p0to1p0_sparse_nnd_beta0p9998_train_evaluatemin'+str(num_particles)+'p_jetpt_jetmass_'
-    dir_name='generation_beta0p9998_dir_second'+model_name+'test'
+    model_name = 'fulldata_'+str(latent_dim)+'latent_'+str(n_filter)+'filters_'+str(n_epochs)+'epochs_'+str(beta).replace(".","p")+'beta_min'+str(num_particles)+'p_jetpt_jetmass'
+    dir_name='dir_'+str(vae_mode)'_'+model_name
 
     cur_jets_dir = os.path.join(configs['paths']['jets_dir'], dir_name)
     cur_report_dir = os.path.join(configs['paths']['report_dir'], dir_name)
@@ -133,6 +133,9 @@ def generate_folders():
 
 
 #falta gerar funções
+
+###### desconsiderar daqui pra baixo (pool para teste) ################
+
 
 #for n_filter in seq_n_filter:
 for latent_dim in latent_dim_seq:
