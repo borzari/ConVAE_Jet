@@ -138,7 +138,7 @@ def generate_folders():
 
 
 #for n_filter in seq_n_filter:
-for latent_dim in latent_dim_seq:
+for latent_dim in latent_dim_se
 
     #model_name = '_test_generation_originaltest_fulldata_'+str(latent_dim)+'latent_'+str(n_filter)+'filters_'+str(n_epochs)+'epochs_0p0to1p0_sparse_nnd_beta0p9998_train_evaluatemin'+str(num_particles)+'p_jetpt_jetmass_'
     #dir_name='generation_beta0p9998_dir_second'+model_name+'test'
