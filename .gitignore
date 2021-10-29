@@ -3,5 +3,4 @@ norm_flows/
 results/
 logs/
 reports/
-models/
 core/utils/__pycache__/
