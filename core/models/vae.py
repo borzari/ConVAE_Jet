@@ -20,6 +20,7 @@ import random
 from coffea.nanoevents.methods import vector
 ak.behavior.update(vector.behavior)
 import mplhep as mhep
+from data import *
 
 plt.style.use(mhep.style.CMS)
 
@@ -127,11 +128,11 @@ class ConvNet(nn.Module):
         return z
 
     def forward(self, x):
-        # calcular KLD aqui em vez da compute_loss
         mean, logvar = self.encode(x)
+        KL_divergence = (0.5 * torch.sum(torch.pow(mean, 2) + torch.exp(logvar) - logvar - 1.0).sum() / batch_size)
         z = self.reparameterize(mean, logvar)
         out = self.decode(z)
-        return out
+        return out, KL_divergence
 
 # Jet observables manual calculation
 def jet_p(p_part): # input should be of shape[batch_size, features, Nparticles]
@@ -157,36 +158,17 @@ def jet_pT(p_part):# input should be of shape[batch_size, features, Nparticles]
     return jet_pt
 
 # Custom loss function VAtrE
-def compute_loss(model, x):
-    #Trocar model por x_decoded
-    print("num_features de dentro da compute loss: " + str(model.num_features))
-    tr_0_max = torch.max(train_dataset[:,0,0])
-    tr_1_max = torch.max(train_dataset[:,0,1])
-    tr_2_max = torch.max(train_dataset[:,0,2])
+def compute_loss(denorm(x), denorm(x_decoded), KL_divergence):
+    train_dataset, valid_dataset, test_dataset, gen_dataset, tr_max, tr_min = generate_datasets()
 
-    tr_0_min = torch.min(train_dataset[:,0,0])
-    tr_1_min = torch.min(train_dataset[:,0,1])
-    tr_2_min = torch.min(train_dataset[:,0,2])
-    mean, logvar = model.encode(x)
-
+    #print("num_features de dentro da compute loss: " + str(model.num_features))
+    #mean, logvar = model.encode(x)
     #substituir
-    z = model.reparameterize(mean, logvar)
-    x_decoded = model.decode(z)
+    #z = model.reparameterize(mean, logvar)
+    #x_decoded = model.decode(z)
 
     x_aux = torch.clone(x)
-    #fim para calc div_kl
-
     x_decoded_aux = torch.clone(x_decoded)
-
-    # if norm = true
-    x_aux[:,0,0] = ((x_aux[:,0,0] * (tr_0_max - tr_0_min)) + tr_0_min)#/part_px_std
-    x_aux[:,0,1] = ((x_aux[:,0,1] * (tr_1_max - tr_1_min)) + tr_1_min)#/part_py_std
-    x_aux[:,0,2] = ((x_aux[:,0,2] * (tr_2_max - tr_2_min)) + tr_2_min)#/part_pz_std
-
-    x_decoded_aux[:,0,0] = ((x_decoded_aux[:,0,0] * (tr_0_max - tr_0_min)) + tr_0_min)#/part_px_std
-    x_decoded_aux[:,0,1] = ((x_decoded_aux[:,0,1] * (tr_1_max - tr_1_min)) + tr_1_min)#/part_py_std
-    x_decoded_aux[:,0,2] = ((x_decoded_aux[:,0,2] * (tr_2_max - tr_2_min)) + tr_2_min)#/part_pz_std
-    ###
 
     pdist = nn.PairwiseDistance(p=2) # Euclidean distance
     x_pos = torch.zeros(batch_size,num_features,num_particles).cuda() #variaveis do config
@@ -231,7 +213,7 @@ def compute_loss(model, x):
     reconstruction_loss = - eucl
 
     # Separate particles' loss components to plot them
-    KL_divergence = (0.5 * torch.sum(torch.pow(mean, 2) + torch.exp(logvar) - logvar - 1.0).sum() / batch_size)
+    #KL_divergence = (0.5 * torch.sum(torch.pow(mean, 2) + torch.exp(logvar) - logvar - 1.0).sum() / batch_size)
     ELBO = ((1-beta)*reconstruction_loss) - (beta*KL_divergence)
     loss = - ELBO
 
@@ -244,10 +226,12 @@ def train(model, batch_data_train, optimizer):
     train_reco_loss = 0.0"""
     input_train = batch_data_train[:, :, :].cuda()
 
-    # rodar encode decode (lembrar de ver a paradinha da KLD)
+    mean, logvar = model.encode(x)
+    z = model.reparameterize(mean, logvar)
+    x_decoded = model.decode(z)
 
     # loss per batch
-    train_loss, train_KLD_loss, train_reco_loss, train_reco_loss_p, train_reco_loss_j, train_reco_loss_pt, train_reco_loss_mass, output_train  = compute_loss(model, input_train)
+    train_loss, train_KLD_loss, train_reco_loss, train_reco_loss_p, train_reco_loss_j, train_reco_loss_pt, train_reco_loss_mass, output_train  = compute_loss(x_decoded, input_train, KL_divergence)
 
     # Backprop and perform Adam optimisation
     # Backpropagation
@@ -267,9 +251,9 @@ def validate(model, batch_data_valid):
     model.eval()
     with torch.no_grad():
         input_valid = batch_data_valid.cuda()
-#            output_valid = model(input_valid)
+
         # loss per batch
-        valid_loss, valid_KLD_loss, valid_reco_loss, valid_reco_loss_p, valid_reco_loss_j, valid_reco_loss_pt, valid_reco_loss_mass, output_valid = compute_loss(model, input_valid)
+        valid_loss, valid_KLD_loss, valid_reco_loss, valid_reco_loss_p, valid_reco_loss_j, valid_reco_loss_pt, valid_reco_loss_mass, output_valid = compute_loss(x_decoded, input_valid, KL_divergence)
 
         return valid_loss, valid_KLD_loss, valid_reco_loss
 
@@ -278,6 +262,5 @@ def test_unseed_data(model, batch_data_test):
     model.eval()
     with torch.no_grad():
         input_test = batch_data_test.cuda()
-#            output_test = model(input_test)
-        test_loss, test_KLD_loss, test_reco_loss, loss_particle, loss_jet, jet_pt_loss, jet_mass_loss, output_test = compute_loss(model, input_test)
+        test_loss, test_KLD_loss, test_reco_loss, loss_particle, loss_jet, jet_pt_loss, jet_mass_loss, output_test = compute_loss(x_decoded, input_test, KL_divergence)
     return input_test, output_test, test_loss, test_KLD_loss, test_reco_loss
