@@ -1,6 +1,7 @@
 #########################################################################################
 # VAE 3D Sparse loss - trained on JEDI-net gluons' dataset
 #########################################################################################
+#LINHA DE TESTE DO PRIMEIRO COMMIT
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
