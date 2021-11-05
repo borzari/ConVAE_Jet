@@ -41,7 +41,6 @@ class ConvNet(nn.Module):
     def __init__(self, configs, tr_max, tr_min):
         super(ConvNet, self).__init__()
 
-
         self.tr_max = tr_max
         self.tr_min = tr_min
 
@@ -167,14 +166,16 @@ def jet_pT(p_part):# input should be of shape[batch_size, features, Nparticles]
 
 def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min):
 
+
+
     #print("num_features de dentro da compute loss: " + str(model.num_features))
     #mean, logvar = model.encode(x)
     #substituir
     #z = model.reparameterize(mean, logvar)
     #x_decoded = model.decode(z)
 
-    x_aux = torch.clone(x)
-    x_decoded_aux = torch.clone(x_decoded)
+    x_aux = torch.clone(denorm(x, tr_max, tr_min))
+    x_decoded_aux = torch.clone(denorm(x_decoded, tr_max, tr_min))
 
     pdist = nn.PairwiseDistance(p=2) # Euclidean distance
     x_pos = torch.zeros(batch_size,num_features,num_particles).cuda() #variaveis do config

@@ -211,7 +211,7 @@ def generate_folders(latent_dim):
 def norm(norm_in, tr_max, tr_min):
     if normalize is True:
         norm_out = torch.clone(norm_in)
-        for i in num_features:
+        for i in range(num_features):
                 norm_out[:,0,i] = (norm_out[:,0,i] - tr_min[i])/(tr_max[i] - tr_min[i])
         return norm_out
     else: return norm_in
@@ -219,7 +219,7 @@ def norm(norm_in, tr_max, tr_min):
 def denorm(denorm_in, tr_max, tr_min):
     if normalize is True:
         denorm_out = torch.clone(denorm_in)
-        for i in num_features:
+        for i in range(num_features):
             denorm_out[:,0,i] = ((denorm_out[:,0,i] * (tr_max[i] - tr_min[i])) + tr_min[i])
         return denorm_out
     else: return denorm_in
