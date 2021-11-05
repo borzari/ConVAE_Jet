@@ -93,94 +93,26 @@ def main():
 
     # Set patience for Early Stopping
     patience = n_epochs
-    #patience = 20
-    #patience = 15
 
     seed = configs['training']['seed']
-    #seed = random.randint(0,(2**32)-1)
-    #print(seed)
 
-    '''
-    ####################################### LOAD DATA #######################################
-    train_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['train_dataset']))
-    valid_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['valid_dataset']))
-    test_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['test_dataset']))
 
-    #train_dataset = train_dataset[:int((len(train_dataset))/10),:,:]
-    #valid_dataset = valid_dataset[:int((len(valid_dataset))/10),:,:]
-    #test_dataset = test_dataset[:int((len(test_dataset))/10),:,:]
+    dataT = DataT()
+    print("tr_max depois da instância: ",dataT.tr_max)
 
-    print(train_dataset.shape,valid_dataset.shape,test_dataset.shape)
-
-    train_dataset = train_dataset.view(len(train_dataset),1,3,num_particles)
-    valid_dataset = valid_dataset.view(len(valid_dataset),1,3,num_particles)
-    test_dataset = test_dataset.view(len(test_dataset),1,3,num_particles)
-
-    train_dataset = train_dataset.cpu()
-    valid_dataset = valid_dataset.cpu()
-    test_dataset = test_dataset.cpu()
-
-    num_features = len(train_dataset[0,0])
-
-    tr_0_max = torch.max(train_dataset[:,0,0])
-    tr_1_max = torch.max(train_dataset[:,0,1])
-    tr_2_max = torch.max(train_dataset[:,0,2])
-
-    tr_0_min = torch.min(train_dataset[:,0,0])
-    tr_1_min = torch.min(train_dataset[:,0,1])
-    tr_2_min = torch.min(train_dataset[:,0,2])
-
-    #normalization com a flag em config
-    train_dataset[:,0,0] = (train_dataset[:,0,0] - tr_0_min)/(tr_0_max - tr_0_min)
-    train_dataset[:,0,1] = (train_dataset[:,0,1] - tr_1_min)/(tr_1_max - tr_1_min)
-    train_dataset[:,0,2] = (train_dataset[:,0,2] - tr_2_min)/(tr_2_max - tr_2_min) # last update
-
-    valid_dataset[:,0,0] = (valid_dataset[:,0,0] - tr_0_min)/(tr_0_max - tr_0_min)
-    valid_dataset[:,0,1] = (valid_dataset[:,0,1] - tr_1_min)/(tr_1_max - tr_1_min)
-    valid_dataset[:,0,2] = (valid_dataset[:,0,2] - tr_2_min)/(tr_2_max - tr_2_min)
-
-    test_dataset[:,0,0] = (test_dataset[:,0,0] - tr_0_min)/(tr_0_max - tr_0_min)
-    test_dataset[:,0,1] = (test_dataset[:,0,1] - tr_1_min)/(tr_1_max - tr_1_min)
-    test_dataset[:,0,2] = (test_dataset[:,0,2] - tr_2_min)/(tr_2_max - tr_2_min)
-
-    norm_part_px = torch.Tensor()
-    norm_part_py = torch.Tensor()
-    norm_part_pz = torch.Tensor()
-
-    gen_dataset = torch.zeros([test_dataset.shape[0], 1, num_features, num_particles])
-    '''
-    train_dataset, valid_dataset, test_dataset, gen_dataset, tr_max, tr_min = generate_datasets()
+    #train_dataset, valid_dataset, test_dataset, gen_dataset, tr_max, tr_min = data.generate_datasets()
 
     #for n_filter in seq_n_filter:
     for latent_dim in latent_dim_seq:
-        '''
-        model_name = '_test_generation_originaltest_fulldata_'+str(latent_dim)+'latent_'+str(n_filter)+'filters_'+str(n_epochs)+'epochs_0p0to1p0_sparse_nnd_beta0p9998_train_evaluatemin'+str(num_particles)+'p_jetpt_jetmass_'
-        dir_name='generation_beta0p9998_dir_second'+model_name+'test'
 
-        cur_jets_dir = os.path.join(configs['paths']['jets_dir'], dir_name)
-        cur_report_dir = os.path.join(configs['paths']['report_dir'], dir_name)
-        cur_model_dir = os.path.join(configs['paths']['model_dir'], dir_name)
-
-        # create folder recursively
-        Path(cur_jets_dir).mkdir(parents=True, exist_ok=True)
-        Path(cur_report_dir).mkdir(parents=True, exist_ok=True)
-        Path(cur_model_dir).mkdir(parents=True, exist_ok=True)
-
-        #os.system('mkdir -p /data/jfialho/sprace-ml-project/ConVAE_Jet/jets/'+str(dir_name))
-        '''
         #receber latent_dim
         print("latent_dim: ", latent_dim)
-        cur_jets_dir, cur_report_dir, cur_model_dir, model_name, dir_name = generate_folders(latent_dim)
 
-        '''
-        # Create iterable data loaders
-        train_loader = DataLoader(dataset=train_dataset, batch_size=batch_size, shuffle=True)
-        valid_loader = DataLoader(dataset=valid_dataset, batch_size=batch_size, shuffle=False)
-        test_loader = DataLoader(dataset=test_dataset, batch_size=batch_size, shuffle=False)
-        gen_loader = DataLoader(dataset=gen_dataset, batch_size=batch_size, shuffle=False)
-        '''
+        #################### create folders ######################
+        cur_jets_dir, cur_report_dir, cur_model_dir, model_name, dir_name = dataT.create_folders(latent_dim)
 
-        train_loader, valid_loader, test_loader, gen_loader = create_loaders(train_dataset, valid_dataset, test_dataset, gen_dataset)
+        #################### create loaders ######################
+        train_loader, valid_loader, test_loader, gen_loader = dataT.create_loaders()
 
         output_tensor_emdt = torch.Tensor()
         output_tensor_emdg = torch.Tensor()
@@ -188,7 +120,7 @@ def main():
 
         ###################################### TRAINING #######################################
         # Initialize model and load it on GPU
-        model = ConvNet(configs)
+        model = ConvNet(configs, dataT.tr_max, dataT.tr_min)
         model = model.cuda()
 
         # Optimizer
