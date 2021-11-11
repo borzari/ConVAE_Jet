@@ -29,16 +29,10 @@ num_particles = 30
 jet_type = 'g'
 
 # Training params
-#N_epochs = 800
-N_epochs = 1500
-#N_epochs = 2000
-#N_epochs = 300
-#N_epochs = 11
+N_epochs = 1
 batch_size = 100
 learning_rate = 0.0001
-#learning_rate = 0.001
-saving_epoch = 20
-#num_filter = 300
+saving_epoch = 1
 num_filter = 50
 
 num_classes = 1
@@ -108,9 +102,9 @@ seed = 123456789
 #print(seed)
 
 ####################################### LOAD DATA #######################################
-train_dataset = torch.load('train_data_pxpypz_g_min30p.pt')
-valid_dataset = torch.load('valid_data_pxpypz_g_min30p.pt')
-test_dataset = torch.load('test_data_pxpypz_g_min30p.pt')
+train_dataset = torch.load('/data/convae_jet/datasets/train_data_pxpypz_g_min30p.pt')
+valid_dataset = torch.load('/data/convae_jet/datasets/valid_data_pxpypz_g_min30p.pt')
+test_dataset = torch.load('/data/convae_jet/datasets/test_data_pxpypz_g_min30p.pt')
 
 #train_dataset = train_dataset[:int((len(train_dataset))/10),:,:]
 #valid_dataset = valid_dataset[:int((len(valid_dataset))/10),:,:]
@@ -1098,35 +1092,29 @@ for latent_dim in latent_dim_seq:
             torch.save(output_tensor_emdt,'emdt'+str(model_name)+'.pt')
             torch.save(output_tensor_emdg,'emdg'+str(model_name)+'.pt')
 
-            os.system('mv emdt'+str(model_name)+'.pt '+str(dir_name))
-            os.system('mv emdg'+str(model_name)+'.pt '+str(dir_name))
-
-    os.system('mv jet_mass_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv jet_pt_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv jet_energy_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv jet_eta_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv jet_phi_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    
-    os.system('mv jet_gen_mass_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv jet_gen_pt_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv jet_gen_energy_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv jet_gen_eta_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv jet_gen_phi_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    
-    os.system('mv part_px_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv part_py_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv part_pz_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv part_pt_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv part_low_pt_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv part_eta_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv part_phi_GeV'+str(model_name)+'.pdf '+str(dir_name))
-    
-    os.system('mv pxpypz_standardized_beta01_latent20'+str(model_name)+'.pdf '+str(dir_name))
-    os.system('mv pxpypz_standardized_loss_components_latent20'+str(model_name)+'.pdf '+str(dir_name))
-
 #    os.system('mv emdt'+str(model_name)+'.pt '+str(dir_name))
 #    os.system('mv emdg'+str(model_name)+'.pt '+str(dir_name))
-
+#    os.system('mv jet_mass_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv jet_pt_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv jet_energy_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv jet_eta_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv jet_phi_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv jet_gen_mass_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv jet_gen_pt_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv jet_gen_energy_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv jet_gen_eta_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv jet_gen_phi_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv part_px_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv part_py_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv part_pz_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv part_pt_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv part_low_pt_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv part_eta_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv part_phi_GeV'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv pxpypz_standardized_beta01_latent20'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv pxpypz_standardized_loss_components_latent20'+str(model_name)+'.pdf '+str(dir_name))
+#    os.system('mv emdt'+str(model_name)+'.pt '+str(dir_name))
+#    os.system('mv emdg'+str(model_name)+'.pt '+str(dir_name))
 #    os.system('mv model_pxpypz_standardized_3DLoss_beta01_latent20'+str(model_name)+'.pt '+str(dir_name))
 
 end_time = time.time()
