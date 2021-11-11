@@ -1,0 +1,27 @@
+(Env) ecaue@top01:~/ConVAE_Jet$ time python min30p_test_vae_nnd_training_evaluation_generation.py > /home/ecaue/ConVAE_Jet/logs/default_run.txt
+mkdir: cannot create directory ‘/home/brenoorzari/jets/generation_beta0p9998_dir_second_test_generation_originaltest_fulldata_30latent_50filters_1epochs_0p0to1p0_sparse_nnd_beta0p9998_train_evaluatemin30p_jetpt_jetmass_test’: File exists
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+min30p_test_vae_nnd_training_evaluation_generation.py:761: RuntimeWarning: invalid value encountered in true_divide
+  eta = np.nan_to_num(np.arcsinh(pz/pt))
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+'texgyreheros-regular.otf' can not be subsetted into a Type 3 font. The entire font will be embedded in the output.
+
+real	6m47.724s
+user	6m24.936s
+sys	0m29.444s
