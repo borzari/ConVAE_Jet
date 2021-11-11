@@ -1,0 +1,7 @@
+torch.Size([120115, 3, 30]) torch.Size([25718, 3, 30]) torch.Size([25731, 3, 30])
+Epoch: 0 -- Train loss: 216.20542776852622 -- Validation loss: 81.98943640564202
+The time to run the network is: 1.9348729451497395 minutes
+EMD test: 0.0038, 0.0070, 0.0077, 0.0183, 0.0239, 0.0606
+EMD gauss: 0.0030, 0.0090, 0.0067, 0.0128, 0.0200, 0.0515
+############ The minimum emdt sum for  30  latent vector dimensions is  0.06060095298858531  ############
+The total time is  6.703977553049723  minutes.
