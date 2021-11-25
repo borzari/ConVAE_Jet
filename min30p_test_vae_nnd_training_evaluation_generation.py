@@ -190,7 +190,7 @@ for latent_dim in latent_dim_seq:
     
     dir_name='generation_beta0p9998_dir_second'+model_name+'test'
    
-    os.system('mkdir /home/brenoorzari/jets/'+str(dir_name))
+    os.system('mkdir -p /home/ecaue/jets/'+str(dir_name))
 
 #    set_seed(seed)
     
@@ -337,7 +337,10 @@ for latent_dim in latent_dim_seq:
     
         # Permutation-invariant Loss / NND / 3D Sparse Loss
         dist = torch.pow(pdist(x_pos, x_decoded_pos),2)
-    
+        #dist = (x_pos,x_decoded_pos)
+
+
+
         # NND original version
         jet_pt_dist = torch.pow(pdist(jets_pt, jets_pt_reco),2)
         jet_mass_dist = torch.pow(pdist(jets_mass, jets_mass_reco),2) 
