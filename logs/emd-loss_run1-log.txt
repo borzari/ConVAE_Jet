@@ -1,0 +1,11 @@
+(Env) ecaue@top01:~/ConVAE_Jet$ python min30p_test_vae_nnd_training_evaluation_generation.py > /home/ecaue/ConVAE_Jet/logs/emd-loss_run1.txt
+Traceback (most recent call last):
+  File "min30p_test_vae_nnd_training_evaluation_generation.py", line 488, in <module>
+    tr_inputs, tr_outputs, tr_loss, tr_kl, tr_eucl, tr_reco_p, tr_reco_j, tr_reco_pt, tr_rec_mass  = train(model, jets_train, optimizer)
+  File "min30p_test_vae_nnd_training_evaluation_generation.py", line 393, in train
+    train_loss, train_KLD_loss, train_reco_loss, train_reco_loss_p, train_reco_loss_j, train_reco_loss_pt, train_reco_loss_mass, output_train  = compute_loss(model, input_train)
+  File "min30p_test_vae_nnd_training_evaluation_generation.py", line 339, in compute_loss
+    dist = jt.losses.EMDLoss.forward(x_pos, x_decoded_pos, False)
+  File "/home/ecaue/.conda/envs/Env/lib/python3.8/site-packages/jetnet/losses/losses.py", line 154, in forward
+    assert (len(jets1.shape) == 3) and (len(jets2.shape) == 3), "Jets shape incorrect"
+AssertionError: Jets shape incorrect

@@ -3,7 +3,7 @@
 #########################################################################################
 
 #Importa a biblioteca com a EMD
-import jetnet
+import jetnet as jt
 
 import torch
 import torch.nn as nn
@@ -336,7 +336,8 @@ for latent_dim in latent_dim_seq:
         x_decoded_pos.repeat(1,1,1,num_particles)
     
         # Permutation-invariant Loss / NND / 3D Sparse Loss
-        dist = torch.pow(pdist(x_pos, x_decoded_pos),2)
+        dist = jt.losses.EMDLoss.forward(x_pos, x_decoded_pos, False)
+        #dist = torch.pow(pdist(x_pos, x_decoded_pos),2)
         #dist = (x_pos,x_decoded_pos)
 
 
