@@ -336,6 +336,10 @@ for latent_dim in latent_dim_seq:
         x_decoded_pos.repeat(1,1,1,num_particles)
     
         # Permutation-invariant Loss / NND / 3D Sparse Loss
+        print("######################################################")
+        print("Shape of x_pos: ",x_pos.shape)
+        print("Shape of x_decoded_pos: ",x_decoded_pos.shape)
+        print("######################################################")
         dist = jt.losses.EMDLoss.forward(x_pos, x_decoded_pos, False)
         #dist = torch.pow(pdist(x_pos, x_decoded_pos),2)
         #dist = (x_pos,x_decoded_pos)
