@@ -329,7 +329,7 @@ for latent_dim in latent_dim_seq:
         x_pos = x_pos.view(batch_size, num_features, 1, num_particles)
     
         x_decoded_pos = torch.zeros(batch_size,num_features,num_particles).cuda()
-        x_decoded_pos = x_decoded_aux[:,0,:,:].cuda()
+        x_decoded_pos = x_decoded_aux[:,0,:,:].cuda() #[100,3,30]
         jets_pt_reco = (jet_pT(x_decoded_pos).unsqueeze(1).cuda())#/jet_pt_std # [100, 1]
         jets_mass_reco = (jet_mass(x_decoded_pos).unsqueeze(1).cuda())#/jet_mass_std
         x_decoded_pos = x_decoded_pos.view(batch_size, num_features, num_particles, 1)
