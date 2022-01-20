@@ -324,43 +324,50 @@ for latent_dim in latent_dim_seq:
         pdist = nn.PairwiseDistance(p=2) # Euclidean distance
         x_pos = torch.zeros(batch_size,num_features,num_particles).cuda()
         x_pos = x_aux[:,0,:,:].cuda() # [100, 3, 30]
+        
+        #Tensor for the calculus of the emd
+        x_emd = torch.permute(x_pos,(0,2,1)).cuda()
+
         jets_pt = (jet_pT(x_pos).unsqueeze(1).cuda())#/jet_pt_std # [100, 1]
         jets_mass = (jet_mass(x_pos).unsqueeze(1).cuda())#/jet_mass_std
         x_pos = x_pos.view(batch_size, num_features, 1, num_particles)
     
         x_decoded_pos = torch.zeros(batch_size,num_features,num_particles).cuda()
         x_decoded_pos = x_decoded_aux[:,0,:,:].cuda() #[100,3,30]
+        
+        #Tensor for the calculus of the emd
+        x_decoded_emd = torch.permute(x_decoded_pos,(0,2,1)).cuda()        
+
         jets_pt_reco = (jet_pT(x_decoded_pos).unsqueeze(1).cuda())#/jet_pt_std # [100, 1]
         jets_mass_reco = (jet_mass(x_decoded_pos).unsqueeze(1).cuda())#/jet_mass_std
         x_decoded_pos = x_decoded_pos.view(batch_size, num_features, num_particles, 1)
         x_decoded_pos.repeat(1,1,1,num_particles)
     
-        # Permutation-invariant Loss / NND / 3D Sparse Loss
-        print("######################################################")
-        print("Shape of x_pos: ",x_pos.shape)
-        print("Shape of x_decoded_pos: ",x_decoded_pos.shape)
-        print("######################################################")
-        dist = jt.losses.EMDLoss.forward(x_pos, x_decoded_pos, False)
+        #Object of Class EMDLoss
+        emd = jt.losses.EMDLoss(num_particles)
+    
+        #EMD Distance
+        dist = emd.forward(x_emd, x_decoded_emd, False).cuda()
         #dist = torch.pow(pdist(x_pos, x_decoded_pos),2)
         #dist = (x_pos,x_decoded_pos)
-
-
 
         # NND original version
         jet_pt_dist = torch.pow(pdist(jets_pt, jets_pt_reco),2)
         jet_mass_dist = torch.pow(pdist(jets_mass, jets_mass_reco),2) 
     
         # Relative NND loss
-    #    jet_pt_dist = torch.pow(pdist(jets_pt, jets_pt_reco),2)/(jets_pt*jets_pt) # [100] pt MSE on inp-outp
-    #    jet_mass_dist = torch.pow(pdist(jets_mass, jets_mass_reco),2)/(jets_mass*jets_mass)  # [100] jet mass MSE on inp-outp
+        #jet_pt_dist = torch.pow(pdist(jets_pt, jets_pt_reco),2)/(jets_pt*jets_pt) # [100] pt MSE on inp-outp
+        #jet_mass_dist = torch.pow(pdist(jets_mass, jets_mass_reco),2)/(jets_mass*jets_mass)  # [100] jet mass MSE on inp-outp
     
         # For every output value, find its closest input value; for every input value, find its closest output value.
-        ieo = torch.min(dist, dim = 1)  # Get min distance per row - Find the closest input to the output
-        oei = torch.min(dist, dim = 2)  # Get min distance per column - Find the closest output to the input
+        #ieo = torch.min(dist, dim = 1)  # Get min distance per row - Find the closest input to the output
+        #oei = torch.min(dist, dim = 2)  # Get min distance per column - Find the closest output to the input
         # Symmetrical euclidean distances
-        eucl = (ieo.values + oei.values)#*x_decoded_aux[:,0,3] # [100, 30]1
+        #eucl = (ieo.values + oei.values)#*x_decoded_aux[:,0,3] # [100, 30]1
     
-        
+        #Sums over the value of dist and then computes the average over the batch size
+        eucl = torch.sum(dist)/batch_size
+
         # Loss per jet (batch size)   
         loss_rec_p = alpha*(torch.sum(eucl, dim=1))
         loss_rec_j = gamma*(gamma_1*(jet_pt_dist) + gamma_2*(jet_mass_dist)) 
