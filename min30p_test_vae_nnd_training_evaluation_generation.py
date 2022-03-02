@@ -710,7 +710,7 @@ def main():
 
                     torch.save(model.state_dict(), 'model_pxpypz_standardized_3DLoss_beta01_latent20'+ str(model_name) + '.pt')
 
-                    os.system('mv model_pxpypz_standardized_3DLoss_beta01_latent20'+str(model_name)+'.pt '+str(dir_name))
+                    #os.system('mv model_pxpypz_standardized_3DLoss_beta01_latent20'+str(model_name)+'.pt '+str(dir_name))
 
                     print('############ The minimum emdt sum for ',latent_dim,' latent vector dimensions is ',min_emdt,' ############')
 
