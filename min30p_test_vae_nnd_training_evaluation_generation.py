@@ -708,7 +708,7 @@ def main():
                     plt.savefig(os.path.join(cur_report_dir,'jet_phi_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
-                    torch.save(model.state_dict(), 'model_pxpypz_standardized_3DLoss_beta01_latent20'+ str(model_name) + '.pt')
+                    torch.save(model.state_dict(), os.path.join(cur_report_dir, 'model_'+ str(model_name) + '.pt'))
 
                     #os.system('mv model_pxpypz_standardized_3DLoss_beta01_latent20'+str(model_name)+'.pt '+str(dir_name))
 
