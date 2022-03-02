@@ -166,6 +166,8 @@ def jet_pT(p_part):# input should be of shape[batch_size, features, Nparticles]
 
 def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min):
 
+
+
     #print("num_features de dentro da compute loss: " + str(model.num_features))
     #mean, logvar = model.encode(x)
     #substituir
@@ -176,26 +178,21 @@ def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min):
     x_decoded_aux = torch.clone(denorm(x_decoded, tr_max, tr_min))
 
     pdist = nn.PairwiseDistance(p=2) # Euclidean distance
-    x_pos = torch.zeros(batch_size,1,num_features,num_particles).cuda() #variaveis do config
-    x_pos = x_aux.cuda() # [100, 1, 3, 30]
-    jets_pt = (jet_pT(x_pos[:,0,:,:]).unsqueeze(1).cuda())#/jet_pt_std # [100, 1]
-    jets_mass = (jet_mass(x_pos[:,0,:,:]).unsqueeze(1).cuda())#/jet_mass_std
-    x_pos = torch.transpose(x_pos,dim0=2,dim1=3)
+    x_pos = torch.zeros(batch_size,num_features,num_particles).cuda() #variaveis do config
+    x_pos = x_aux[:,0,:,:].cuda() # [100, 3, 30]
+    jets_pt = (jet_pT(x_pos).unsqueeze(1).cuda())#/jet_pt_std # [100, 1]
+    jets_mass = (jet_mass(x_pos).unsqueeze(1).cuda())#/jet_mass_std
+    x_pos = x_pos.view(batch_size, num_features, 1, num_particles)
 
-    x_decoded_pos = torch.zeros(batch_size,1,num_features,num_particles).cuda()
-    x_decoded_pos = x_decoded_aux.cuda() # [100, 1, 3, 30]
-    jets_pt_reco = (jet_pT(x_decoded_pos[:,0,:,:]).unsqueeze(1).cuda())#/jet_pt_std # [100, 1]
-    jets_mass_reco = (jet_mass(x_decoded_pos[:,0,:,:]).unsqueeze(1).cuda())#/jet_mass_std
-    x_decoded_pos = torch.transpose(x_decoded_pos,dim0=2,dim1=3)
-    x_decoded_pos = x_decoded_pos.view(batch_size, 1, num_particles, 1, num_features)
-    x_decoded_pos = x_decoded_pos.repeat(1,1,1,num_particles,1)
+    x_decoded_pos = torch.zeros(batch_size,num_features,num_particles).cuda()
+    x_decoded_pos = x_decoded_aux[:,0,:,:].cuda()
+    jets_pt_reco = (jet_pT(x_decoded_pos).unsqueeze(1).cuda())#/jet_pt_std # [100, 1]
+    jets_mass_reco = (jet_mass(x_decoded_pos).unsqueeze(1).cuda())#/jet_mass_std
+    x_decoded_pos = x_decoded_pos.view(batch_size, num_features, num_particles, 1)
+    x_decoded_pos.repeat(1,1,1,num_particles)
 
     # Permutation-invariant Loss / NND / 3D Sparse Loss
-    dist_aux = torch.pow(pdist(x_pos, x_decoded_pos),2)
-    dist = torch.Tensor(1,num_particles,num_particles).cuda()
-    dist[0] = dist_aux[0,0]
-    for i in range(1,batch_size):
-        dist = torch.cat((dist,dist_aux[i,i].view(1,num_particles,num_particles)))
+    dist = torch.pow(pdist(x_pos, x_decoded_pos),2)
 
     # NND original version
     jet_pt_dist = torch.pow(pdist(jets_pt, jets_pt_reco),2)
