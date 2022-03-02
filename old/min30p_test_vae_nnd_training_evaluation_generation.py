@@ -347,19 +347,31 @@ def main():
         #            original_X = ((X * std) + mean)
                     return original_X
 
-                px_r = inverse_standardize_t(px, tr_min[0],tr_max[0])
-                py_r = inverse_standardize_t(py, tr_min[1],tr_max[1])
-                pz_r = inverse_standardize_t(pz, tr_min[2],tr_max[2])
+#                px_r = inverse_standardize_t(px, tr_min[0],tr_max[0])
+#                py_r = inverse_standardize_t(py, tr_min[1],tr_max[1])
+#                pz_r = inverse_standardize_t(pz, tr_min[2],tr_max[2])
+
+                px_r = inverse_standardize_t(px, dataT.tr_min[0],dataT.tr_max[0])
+                py_r = inverse_standardize_t(py, dataT.tr_min[1],dataT.tr_max[1])
+                pz_r = inverse_standardize_t(pz, dataT.tr_min[2],dataT.tr_max[2])
 
                 # Test data
-                px_reco_r_0 = inverse_standardize_t(px_reco_0, tr_min[0],tr_max[0])
-                py_reco_r_0 = inverse_standardize_t(py_reco_0, tr_min[1],tr_max[1])
-                pz_reco_r_0 = inverse_standardize_t(pz_reco_0, tr_min[2],tr_max[2])
+#                px_reco_r_0 = inverse_standardize_t(px_reco_0, tr_min[0],tr_max[0])
+#                py_reco_r_0 = inverse_standardize_t(py_reco_0, tr_min[1],tr_max[1])
+#                pz_reco_r_0 = inverse_standardize_t(pz_reco_0, tr_min[2],tr_max[2])
+
+                px_reco_r_0 = inverse_standardize_t(px_reco_0, dataT.tr_min[0],dataT.tr_max[0])
+                py_reco_r_0 = inverse_standardize_t(py_reco_0, dataT.tr_min[1],dataT.tr_max[1])
+                pz_reco_r_0 = inverse_standardize_t(pz_reco_0, dataT.tr_min[2],dataT.tr_max[2])
 
                 # Gen data
-                px_gen_r_0 = inverse_standardize_t(px_gen_0, tr_min[0],tr_max[0])
-                py_gen_r_0 = inverse_standardize_t(py_gen_0, tr_min[1],tr_max[1])
-                pz_gen_r_0 = inverse_standardize_t(pz_gen_0, tr_min[2],tr_max[2])
+#                px_gen_r_0 = inverse_standardize_t(px_gen_0, tr_min[0],tr_max[0])
+#                py_gen_r_0 = inverse_standardize_t(py_gen_0, tr_min[1],tr_max[1])
+#                pz_gen_r_0 = inverse_standardize_t(pz_gen_0, tr_min[2],tr_max[2])
+
+                px_gen_r_0 = inverse_standardize_t(px_gen_0, dataT.tr_min[0],dataT.tr_max[0])
+                py_gen_r_0 = inverse_standardize_t(py_gen_0, dataT.tr_min[1],dataT.tr_max[1])
+                pz_gen_r_0 = inverse_standardize_t(pz_gen_0, dataT.tr_min[2],dataT.tr_max[2])
 
                 n_jets = px_r.shape[0]
                 ######################################################################################
@@ -708,9 +720,9 @@ def main():
                     plt.savefig(os.path.join(cur_report_dir,'jet_phi_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
                     plt.clf()
 
+#                    torch.save(model.state_dict(), 'model_pxpypz_standardized_3DLoss_beta01_latent20'+ str(model_name) + '.pt')
                     torch.save(model.state_dict(), os.path.join(cur_report_dir, 'model_'+ str(model_name) + '.pt'))
-
-                    #os.system('mv model_pxpypz_standardized_3DLoss_beta01_latent20'+str(model_name)+'.pt '+str(dir_name))
+#                    os.system('mv model_pxpypz_standardized_3DLoss_beta01_latent20'+str(model_name)+'.pt '+str(dir_name))
 
                     print('############ The minimum emdt sum for ',latent_dim,' latent vector dimensions is ',min_emdt,' ############')
 
