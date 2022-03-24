@@ -252,38 +252,6 @@ def main():
                 py_reco_train = all_output[:,0,1,:]
                 pz_reco_train = all_output[:,0,2,:]
 
-                if((epoch+1)==n_epochs or stale_epochs>patience):
-                    # Plot each component of the loss function
-                    plt.figure()
-                    plt.plot(x_graph, tr_y_kl, label = "Train KL Divergence")
-                    plt.plot(x_graph, tr_y_rec, label = 'Train Reconstruction Loss')
-                    plt.plot(x_graph, tr_y_loss, label = 'Train Total Loss')
-                    plt.plot(x_graph, val_y_kl, label = "Validation KL Divergence")
-                    plt.plot(x_graph, val_y_rec, label = 'Validation Reconstruction Loss')
-                    plt.plot(x_graph, val_y_loss, label = 'Validation Total Loss')
-                    plt.yscale('log')
-                    plt.xlabel('Epoch')
-                    plt.ylabel('A. U.')
-                    plt.title('Loss Function Components')
-                    plt.legend()
-                    plt.savefig(os.path.join(cur_report_dir, 'pxpypz_standardized_beta01_latent20' + str(model_name) + '.pdf'))
-                    plt.clf()
-
-                if((epoch+1)==n_epochs or stale_epochs>patience):
-                    # Plot each depedent component of the loss function
-                    plt.figure()
-                    plt.plot(y_graph, tr_y_loss_p, label = 'Train Reco - Particles Loss')
-                    plt.plot(y_graph, tr_y_loss_j, label = 'Train Reco - Jets Loss (a_Penalty)')
-                    plt.plot(y_graph, tr_y_loss_pt, label = 'Train Reco - Jets $p_T$')
-                    plt.plot(y_graph, tr_y_loss_mass, label = 'Train Reco - Jets Mass')
-                    plt.yscale('log')
-                    plt.xlabel('Epoch')
-                    #plt.ylabel('A. U.')
-                    plt.title('Dependent Components - NND')
-                    plt.legend()
-                    plt.savefig(os.path.join(cur_report_dir,'pxpypz_standardized_loss_components_latent20' + str(model_name) + '.pdf'))
-                    plt.clf()
-
                 ####################################### EVALUATION #######################################
                 all_input_test = np.empty(shape=(0, 1, num_features, num_particles))
                 all_output_test = np.empty(shape=(0, 1, num_features, num_particles))
@@ -479,6 +447,8 @@ def main():
                 jets_input_data = jet_features(hadr_input_data)
                 jets_output_data = jet_features(hadr_output_data)
                 jets_gen_output_data = jet_features(hadr_gen_output_data)
+
+                # V1: encontrar outro método para pegar conteúdo dos histogramas
 
                 minp, bins, _ = plt.hist(jets_input_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
                 mout = plt.hist(jets_output_data[:,0], bins=100, range=[0, 400], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
