@@ -30,7 +30,9 @@ torch.autograd.set_detect_anomaly(True)
 
 from core.utils.utils import *
 from core.models.vae import *
-from data import *
+from core.data.data import *
+import optuna
+from optuna.trial import TrialState
 
 def parse_args():
     """Parse arguments."""
@@ -47,7 +49,7 @@ def parse_args():
 
     return args
 
-def main():
+def objective(trial):
     np.seterr(divide='ignore', invalid='ignore')
     args = parse_args()
 
@@ -62,24 +64,30 @@ def main():
     # Training params
     n_epochs = configs['training']['n_epochs']
     batch_size = configs['training']['batch_size']
-    learning_rate = configs['training']['learning_rate']
+    #learning_rate = configs['training']['learning_rate']
+    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-1)
     saving_epoch = configs['training']['saving_epoch']
     n_filter = configs['training']['n_filter']
     n_classes = configs['training']['n_classes']
     latent_dim_seq = [configs['training']['latent_dim_seq']]
-    beta = configs['training']['beta'] # equivalent to beta=5000 in the old setup
+    #beta = configs['training']['beta'] # equivalent to beta=5000 in the old setup
+    beta = trial.suggest_float("beta", 0, 1)
 
     # Regularizer for loss penalty
     # Jet features loss weighting
-    gamma = configs['training']['gamma']
-    gamma_1 = configs['training']['gamma_1']
-    gamma_2 = configs['training']['gamma_2']
+    # gamma = configs['training']['gamma']
+    # gamma_1 = configs['training']['gamma_1']
+    # gamma_2 = configs['training']['gamma_2']
+
+    gamma = trial.suggest_float("gamma", 0, 50)
+    gamma_1 = trial.suggest_float("gamma_1", 0, 50)
+    gamma_2 = trial.suggest_float("gamma_2", 0, 50)
     #gamma_2 = 1.0
     n = 0 # this is to count the epochs to turn on/off the jet pt contribution to the loss
 
     # Particle features loss weighting
-    alpha = configs['training']['alpha']
-
+    #alpha = configs['training']['alpha']
+    alpha = trial.suggest_float("alpha", 0, 1)
     # Starting time
     start_time = time.time()
 
@@ -512,10 +520,44 @@ def main():
 
                 print("The accuracy is {:.4f} and the max_accuracy is {:.4f}. The emd is {:.4f} and the norm_emd is {:.4f}".format(accuracy,max_accuracy,emdg_sum,norm_emdg))
 
+                ##### send accuracy from current epoch to optimizer
+                trial.report(accuracy, epoch)
+
+                # Handle pruning based on the intermediate value.
+                if trial.should_prune():
+                    raise optuna.exceptions.TrialPruned()
+
     end_time = time.time()
     print("The total time is ",((end_time-start_time)/60.0)," minutes.")
+    print("###########################################################")
+    print()
 
     return max_accuracy
+
+def main():
+    study = optuna.create_study(
+    study_name='opt_convae_v1',
+    storage='mysql://usr_optuna:sY8d%5kq@top01/db_optuna',
+    load_if_exists=True,
+    direction="maximize")
+    study.optimize(objective, n_trials=1000, timeout=6000)
+
+    pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
+    complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
+
+    print("Study statistics: ")
+    print("  Number of finished trials: ", len(study.trials))
+    print("  Number of pruned trials: ", len(pruned_trials))
+    print("  Number of complete trials: ", len(complete_trials))
+
+    print("Best trial:")
+    trial = study.best_trial
+
+    print("  Value: ", trial.value)
+
+    print("  Params: ")
+    for key, value in trial.params.items():
+        print("    {}: {}".format(key, value))
 
 if __name__=='__main__':
     main()
