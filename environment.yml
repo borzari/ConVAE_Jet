@@ -126,3 +126,4 @@ dependencies:
     - uproot3-methods==0.10.1
     - vector==0.8.5
     - wrapt==1.13.3
+    - optuna==2.10.0
