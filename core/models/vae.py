@@ -20,12 +20,13 @@ import random
 from coffea.nanoevents.methods import vector
 ak.behavior.update(vector.behavior)
 import mplhep as mhep
-from data import *
-#from core.data.data import *
+from core.data.data import *
 
 plt.style.use(mhep.style.CMS)
 
 torch.autograd.set_detect_anomaly(True)
+
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -140,18 +141,18 @@ class ConvNet(nn.Module):
 
 # Jet observables manual calculation
 def jet_p(p_part): # input should be of shape[batch_size, features, Nparticles]
-    pjet = torch.sum(p_part, dim=2).cuda() # [batch, features (px, py, pz)]
+    pjet = torch.sum(p_part, dim=2).to(device) # [batch, features (px, py, pz)]
     return pjet
 
 def jet_Energy (p_part): # input should be of shape [batch_size, features, Nparticles]
     E_particles = torch.sqrt(torch.sum(p_part*p_part, dim=1)) # E per particle shape: [100, 30]
-    E_jet = torch.sum(E_particles, dim=1).cuda() # Energy per jet [100]
+    E_jet = torch.sum(E_particles, dim=1).to(device) # Energy per jet [100]
     return E_jet
 
 def jet_mass (p_part):
     jet_e = jet_Energy(p_part)
     P_jet = jet_p(p_part)
-    m_jet = torch.sqrt(jet_e*jet_e - (P_jet[:,0]*P_jet[:,0]) - (P_jet[:,1]*P_jet[:,1]) - (P_jet[:,2]*P_jet[:,2])).cuda()
+    m_jet = torch.sqrt(jet_e*jet_e - (P_jet[:,0]*P_jet[:,0]) - (P_jet[:,1]*P_jet[:,1]) - (P_jet[:,2]*P_jet[:,2])).to(device)
     return m_jet # mass per jet [100]
 
 def jet_pT(p_part):# input should be of shape[batch_size, features, Nparticles]
@@ -170,16 +171,16 @@ def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min):
     x_decoded_aux = torch.clone(denorm(x_decoded, tr_max, tr_min))
 
     pdist = nn.PairwiseDistance(p=2) # Euclidean distance
-    x_pos = torch.zeros(batch_size,1,num_features,num_particles).cuda() #variaveis do config
-    x_pos = x_aux.cuda() # [100, 1, 3, 30]
-    jets_pt = (jet_pT(x_pos[:,0,:,:]).unsqueeze(1).cuda())#/jet_pt_std # [100, 1]
-    jets_mass = (jet_mass(x_pos[:,0,:,:]).unsqueeze(1).cuda())#/jet_mass_std
+    x_pos = torch.zeros(batch_size,1,num_features,num_particles).to(device) #variaveis do config
+    x_pos = x_aux.to(device) # [100, 1, 3, 30]
+    jets_pt = (jet_pT(x_pos[:,0,:,:]).unsqueeze(1).to(device))#/jet_pt_std # [100, 1]
+    jets_mass = (jet_mass(x_pos[:,0,:,:]).unsqueeze(1).to(device))#/jet_mass_std
     x_pos = torch.transpose(x_pos,dim0=2,dim1=3)
 
-    x_decoded_pos = torch.zeros(batch_size,1,num_features,num_particles).cuda()
-    x_decoded_pos = x_decoded_aux.cuda() # [100, 1, 3, 30]
-    jets_pt_reco = (jet_pT(x_decoded_pos[:,0,:,:]).unsqueeze(1).cuda())#/jet_pt_std # [100, 1]
-    jets_mass_reco = (jet_mass(x_decoded_pos[:,0,:,:]).unsqueeze(1).cuda())#/jet_mass_std
+    x_decoded_pos = torch.zeros(batch_size,1,num_features,num_particles).to(device)
+    x_decoded_pos = x_decoded_aux.to(device) # [100, 1, 3, 30]
+    jets_pt_reco = (jet_pT(x_decoded_pos[:,0,:,:]).unsqueeze(1).to(device))#/jet_pt_std # [100, 1]
+    jets_mass_reco = (jet_mass(x_decoded_pos[:,0,:,:]).unsqueeze(1).to(device))#/jet_mass_std
     x_decoded_pos = torch.transpose(x_decoded_pos,dim0=2,dim1=3)
     x_decoded_pos = x_decoded_pos.view(batch_size, 1, num_particles, 1, num_features)
     x_decoded_pos = x_decoded_pos.repeat(1,1,1,num_particles,1)
@@ -230,7 +231,7 @@ def train(model, batch_data_train, optimizer):
     tr_max = model.tr_max
     tr_min = model.tr_min
 
-    input_train = batch_data_train[:, :, :].cuda()
+    input_train = batch_data_train[:, :, :].to(device)
 
     output_train, train_KLD_loss = model(input_train)
 
@@ -260,7 +261,7 @@ def validate(model, batch_data_valid):
 
     with torch.no_grad():
         #test
-        input_valid = batch_data_valid.cuda()
+        input_valid = batch_data_valid.to(device)
         x_decoded, KL_divergence = model(input_valid)
 
         # loss per batch
@@ -277,7 +278,7 @@ def test_unseed_data(model, batch_data_test):
     model.eval()
     with torch.no_grad():
         #test
-        input_test = batch_data_test.cuda()
+        input_test = batch_data_test.to(device)
         x_decoded, KL_divergence = model(input_test)
 
         test_loss, test_reco_loss, loss_particle, loss_jet, jet_pt_loss, jet_mass_loss = compute_loss(x_decoded, input_test, KL_divergence, tr_max, tr_min)

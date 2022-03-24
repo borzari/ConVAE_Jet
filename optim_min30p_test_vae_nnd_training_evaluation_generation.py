@@ -28,6 +28,8 @@ plt.style.use(mhep.style.CMS)
 
 torch.autograd.set_detect_anomaly(True)
 
+device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+
 from core.utils.utils import *
 from core.models.vae import *
 from core.data.data import *
@@ -132,7 +134,7 @@ def objective(trial):
         ###################################### TRAINING #######################################
         # Initialize model and load it on GPU
         model = ConvNet(configs, dataT.tr_max, dataT.tr_min)
-        model = model.cuda()
+        model = model.to(device)
 
         # Optimizer
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -293,7 +295,7 @@ def objective(trial):
                     if g == (len(gen_loader) - 1):
                         break
                     # generation
-                    z = torch.randn(batch_size, latent_dim).cuda()
+                    z = torch.randn(batch_size, latent_dim).to(device)
                     generated_output = model.decode(z)
                     batch_gen_output = generated_output.cpu().detach().numpy()
                     gen_output = np.concatenate((gen_output, batch_gen_output), axis=0)
