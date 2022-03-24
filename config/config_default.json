@@ -16,7 +16,7 @@
         "filename": "./dataset/phi025-025_eta025-025_train1_lasthit_20200219.csv",
         "train_split": 0.80,
         "normalize": true,
-	"div_factor": 10
+	"data_percentage": 1.0
     },
     "physics": {
         "num_particles": 30,

@@ -98,9 +98,9 @@ class DataT():
         self.valid_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['valid_dataset']))
         self.test_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['test_dataset']))
 
-        self.train_dataset = self.train_dataset[:int(len(self.train_dataset)/configs['data']['div_factor'])]
-        self.valid_dataset = self.valid_dataset[:int(len(self.valid_dataset)/configs['data']['div_factor'])]
-        self.test_dataset = self.test_dataset[:int(len(self.test_dataset)/configs['data']['div_factor'])]
+        self.train_dataset = self.train_dataset[:int(len(self.train_dataset)*configs['data']['data_percentage'])]
+        self.valid_dataset = self.valid_dataset[:int(len(self.valid_dataset)*configs['data']['data_percentage'])]
+        self.test_dataset = self.test_dataset[:int(len(self.test_dataset)*configs['data']['data_percentage'])]
 
         self.train_dataset = self.train_dataset.view(len(self.train_dataset),1,num_features,num_particles)
         self.valid_dataset = self.valid_dataset.view(len(self.valid_dataset),1,num_features,num_particles)
