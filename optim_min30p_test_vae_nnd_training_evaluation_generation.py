@@ -448,47 +448,25 @@ def main():
                 jets_output_data = jet_features(hadr_output_data)
                 jets_gen_output_data = jet_features(hadr_gen_output_data)
 
-                # V1: encontrar outro método para pegar conteúdo dos histogramas
+                minp, bins = np.histogram(jets_input_data[:,0], bins=100, range=[0,400])
+                mout, bins = np.histogram(jets_output_data[:,0], bins=100, range=[0,400])
+                mgen, bins = np.histogram(jets_gen_output_data[:,0], bins=100, range=[0,400])
 
-                minp, bins, _ = plt.hist(jets_input_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                mout = plt.hist(jets_output_data[:,0], bins=100, range=[0, 400], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
+                ptinp, bins = np.histogram(jets_input_data[:,1], bins=100, range=[0,3000])
+                ptout, bins = np.histogram(jets_output_data[:,1], bins=100, range=[0,3000])
+                ptgen, bins = np.histogram(jets_gen_output_data[:,1], bins=100, range=[0,3000])
 
-                minp, bins, _ = plt.hist(jets_input_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                mgen = plt.hist(jets_gen_output_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black',linewidth=1.5)
-                plt.clf()
+                einp, bins = np.histogram(jets_input_data[:,2], bins=100, range=[200,4000])
+                eout, bins = np.histogram(jets_output_data[:,2], bins=100, range=[200,4000])
+                egen, bins = np.histogram(jets_gen_output_data[:,2], bins=100, range=[200,4000])
 
-                ptinp, bins, _ = plt.hist(jets_input_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                ptout = plt.hist(jets_output_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
+                etainp, bins = np.histogram(jets_input_data[:,3], bins=100, range=[-3,3])
+                etaout, bins = np.histogram(jets_output_data[:,3], bins=100, range=[-3,3])
+                etagen, bins = np.histogram(jets_gen_output_data[:,3], bins=100, range=[-3,3])
 
-                ptinp, bins, _ = plt.hist(jets_input_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                ptgen = plt.hist(jets_gen_output_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                einp, bins, _ = plt.hist(jets_input_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                eout = plt.hist(jets_output_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                einp, bins, _ = plt.hist(jets_input_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                egen= plt.hist(jets_gen_output_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                etainp, bins, _ = plt.hist(jets_input_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                etaout = plt.hist(jets_output_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                etainp, bins, _ = plt.hist(jets_input_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                etagen = plt.hist(jets_gen_output_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                phiinp, bins, _ = plt.hist(jets_input_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                phiout = plt.hist(jets_output_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                phiinp, bins, _ = plt.hist(jets_input_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                phigen = plt.hist(jets_gen_output_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
+                phiinp, bins = np.histogram(jets_input_data[:,4], bins=100, range=[-3,3])
+                phiout, bins = np.histogram(jets_output_data[:,4], bins=100, range=[-3,3])
+                phigen, bins = np.histogram(jets_gen_output_data[:,4], bins=100, range=[-3,3])
 
                 minp = (minp/minp.sum()) + 0.000000000001
                 ptinp = (ptinp/ptinp.sum()) + 0.000000000001
@@ -496,17 +474,17 @@ def main():
                 etainp = (etainp/etainp.sum()) + 0.000000000001
                 phiinp = (phiinp/phiinp.sum()) + 0.000000000001
 
-                mout = (mout[0]/mout[0].sum()) + 0.000000000001
-                ptout = (ptout[0]/ptout[0].sum()) + 0.000000000001
-                eout = (eout[0]/eout[0].sum()) + 0.000000000001
-                etaout = (etaout[0]/etaout[0].sum()) + 0.000000000001
-                phiout = (phiout[0]/phiout[0].sum()) + 0.000000000001
+                mout = (mout/mout.sum()) + 0.000000000001
+                ptout = (ptout/ptout.sum()) + 0.000000000001
+                eout = (eout/eout.sum()) + 0.000000000001
+                etaout = (etaout/etaout.sum()) + 0.000000000001
+                phiout = (phiout/phiout.sum()) + 0.000000000001
 
-                mgen = (mgen[0]/mgen[0].sum()) + 0.000000000001
-                ptgen = (ptgen[0]/ptgen[0].sum()) + 0.000000000001
-                egen = (egen[0]/egen[0].sum()) + 0.000000000001
-                etagen = (etagen[0]/etagen[0].sum()) + 0.000000000001
-                phigen = (phigen[0]/phigen[0].sum()) + 0.000000000001
+                mgen = (mgen/mgen.sum()) + 0.000000000001
+                ptgen = (ptgen/ptgen.sum()) + 0.000000000001
+                egen = (egen/egen.sum()) + 0.000000000001
+                etagen = (etagen/etagen.sum()) + 0.000000000001
+                phigen = (phigen/phigen.sum()) + 0.000000000001
 
                 emdt_m = wasserstein_distance(mout,minp)
                 emdt_pt = wasserstein_distance(ptout,ptinp)
