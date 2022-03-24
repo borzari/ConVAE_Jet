@@ -96,6 +96,9 @@ def main():
 
     seed = configs['training']['seed']
 
+    # Define max_accuracy and norm_emdg for each experiment with different hyperparameter values
+    max_accuracy = 0.0
+    norm_emdg = 1.0
 
     dataT = DataT()
     print("tr_max depois da instância: ",dataT.tr_max)
@@ -459,93 +462,6 @@ def main():
                 hadr_output_data = ptetaphim_particles(output_data_0)
                 hadr_gen_output_data = ptetaphim_particles(gen_output_data_0)
 
-                input_cart = np.empty(shape=(0,3))
-                input_hadr = np.empty(shape=(0,3))
-                output_cart = np.empty(shape=(0,3))
-                output_hadr = np.empty(shape=(0,3))
-                gen_cart = np.empty(shape=(0,3))
-                gen_hadr = np.empty(shape=(0,3))
-
-                if((epoch+1)==n_epochs or stale_epochs>patience):
-
-                    for d in range(len(input_data)):
-                        input_cart = np.concatenate((input_cart,input_data[d,:,:3]),axis=0)
-                        input_hadr = np.concatenate((input_hadr,hadr_input_data[d,:,:3]),axis=0)
-                        output_cart = np.concatenate((output_cart,output_data_0[d,:,:3]),axis=0)
-                        output_hadr = np.concatenate((output_hadr,hadr_output_data[d,:,:3]),axis=0)
-                        gen_cart = np.concatenate((gen_cart,gen_output_data_0[d,:,:3]),axis=0)
-                        gen_hadr = np.concatenate((gen_hadr,hadr_gen_output_data[d,:,:3]),axis=0)
-
-                    inppx, bins, _ = plt.hist(input_cart[:,0], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                    outpx = plt.hist(output_cart[:,0], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Reco Test', color = spdblue,linewidth=1.5)
-                    genpx = plt.hist(gen_cart[:,0], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Generated', color = spdyellow,linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('Particle px (GeV)')
-                    plt.yscale('log')
-                    plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'part_px_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    inppy, bins, _ = plt.hist(input_cart[:,1], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                    outpy = plt.hist(output_cart[:,1], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Reco Test', color = spdblue,linewidth=1.5)
-                    genpy = plt.hist(gen_cart[:,1], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Generated', color = spdyellow,linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('Particle py (GeV)')
-                    plt.yscale('log')
-                    plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'part_py_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    inppz, bins, _ = plt.hist(input_cart[:,2], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                    outpz = plt.hist(output_cart[:,2], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Reco Test', color = spdblue,linewidth=1.5)
-                    genpz = plt.hist(gen_cart[:,2], bins=100, range = [-400, 400], histtype = 'step', density=False, label='Generated', color = spdyellow,linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('Particle pz (GeV)')
-                    plt.yscale('log')
-                    plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'part_pz_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    inppt, bins, _ = plt.hist(input_hadr[:,0], bins=100, range = [0, 1500], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                    outpt = plt.hist(output_hadr[:,0], bins=100, range = [0, 1500], histtype = 'step', density=False, label='Reco Test', color = spdblue,linewidth=1.5)
-                    genpt = plt.hist(gen_hadr[:,0], bins=100, range = [0, 1500], histtype = 'step', density=False, label='Generated', color = spdyellow,linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('Particle pt (GeV)')
-                    plt.yscale('log')
-                    plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'part_pt_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    inplowpt, bins, _ = plt.hist(input_hadr[:,0], bins=100, range = [0, 2], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                    outlowpt = plt.hist(output_hadr[:,0], bins=100, range = [0, 2], histtype = 'step', density=False, label='Reco Test', color = spdblue,linewidth=1.5)
-                    genlowpt = plt.hist(gen_hadr[:,0], bins=100, range = [0, 2], histtype = 'step', density=False, label='Generated', color = spdyellow,linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('Particle pt (GeV)')
-                    plt.yscale('log')
-                    plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'part_low_pt_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    inpeta, bins, _ = plt.hist(input_hadr[:,1], bins=100, range = [-4, 4], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                    outeta = plt.hist(output_hadr[:,1], bins=100, range = [-4, 4], histtype = 'step', density=False, label='Reco Test', color = spdblue,linewidth=1.5)
-                    geneta = plt.hist(gen_hadr[:,1], bins=100, range = [-4, 4], histtype = 'step', density=False, label='Generated', color = spdyellow,linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('Particle eta (GeV)')
-                    plt.yscale('log')
-                    plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'part_eta_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    inpphi, bins, _ = plt.hist(input_hadr[:,2], bins=100, range = [-4, 4], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                    outphi = plt.hist(output_hadr[:,2], bins=100, range = [-4, 4], histtype = 'step', density=False, label='Reco Test', color = spdblue,linewidth=1.5)
-                    genphi = plt.hist(gen_hadr[:,2], bins=100, range = [-4, 4], histtype = 'step', density=False, label='Generated', color = spdyellow,linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('Particle phi (GeV)')
-                    plt.yscale('log')
-                    plt.legend(loc='upper right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'part_phi_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
                 def jet_features(jets, mask_bool=False, mask=None):
                     vecs = ak.zip({
                             "pt": jets[:, :, 0],
@@ -636,138 +552,22 @@ def main():
                 emdg_phi = wasserstein_distance(phigen,phiinp)
                 emdg_sum = emdg_m + emdg_pt + emdg_e + emdg_eta + emdg_phi
 
-                print("EMD test: {:.4f}, {:.4f}, {:.4f}, {:.4f}, {:.4f}, {:.4f}".format(emdt_m, emdt_pt, emdt_e, emdt_eta, emdt_phi, emdt_sum))
-                print("EMD gauss: {:.4f}, {:.4f}, {:.4f}, {:.4f}, {:.4f}, {:.4f}".format(emdg_m, emdg_pt, emdg_e, emdg_eta, emdg_phi, emdg_sum))
+                print(emdg_sum,norm_emdg)
 
-                output_tensor_emdt = torch.cat((output_tensor_emdt,torch.ones(1)*(epoch+1)))
-                output_tensor_emdt = torch.cat((output_tensor_emdt,torch.ones(1)*emdt_m))
-                output_tensor_emdt = torch.cat((output_tensor_emdt,torch.ones(1)*emdt_pt))
-                output_tensor_emdt = torch.cat((output_tensor_emdt,torch.ones(1)*emdt_e))
-                output_tensor_emdt = torch.cat((output_tensor_emdt,torch.ones(1)*emdt_eta))
-                output_tensor_emdt = torch.cat((output_tensor_emdt,torch.ones(1)*emdt_phi))
-                output_tensor_emdt = torch.cat((output_tensor_emdt,torch.ones(1)*emdt_sum))
+                if epoch+1 == saving_epoch:
+                    norm_emdg = emdg_sum
 
-                output_tensor_emdg = torch.cat((output_tensor_emdg,torch.ones(1)*(epoch+1)))
-                output_tensor_emdg = torch.cat((output_tensor_emdg,torch.ones(1)*emdg_m))
-                output_tensor_emdg = torch.cat((output_tensor_emdg,torch.ones(1)*emdg_pt))
-                output_tensor_emdg = torch.cat((output_tensor_emdg,torch.ones(1)*emdg_e))
-                output_tensor_emdg = torch.cat((output_tensor_emdg,torch.ones(1)*emdg_eta))
-                output_tensor_emdg = torch.cat((output_tensor_emdg,torch.ones(1)*emdg_phi))
-                output_tensor_emdg = torch.cat((output_tensor_emdg,torch.ones(1)*emdg_sum))
+                accuracy = 1 - (emdg_sum/norm_emdg)
 
-                fifty_epoch.append(epoch+1)
-                emdt_epoch.append(emdt_sum)
-                emdg_epoch.append(emdt_sum)
+                if accuracy >= max_accuracy:
+                    max_accuracy = accuracy
 
-                if(emdt_sum <= min_emdt or stale_epochs>patience or (epoch+1)==n_epochs):
-
-                    min_emdt = emdt_sum
-
-                    minp, bins, _ = plt.hist(jets_input_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                    mout = plt.hist(jets_output_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black',linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('jet mass (GeV)')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_mass_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    ptinp, bins, _ = plt.hist(jets_input_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                    ptout = plt.hist(jets_output_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('jet $p_T$ (GeV)')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_pt_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    einp, bins, _ = plt.hist(jets_input_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                    eout = plt.hist(jets_output_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('$jet energy$ (GeV)')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_energy_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    etainp, bins, _ = plt.hist(jets_input_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                    etaout = plt.hist(jets_output_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('jet $\eta$')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_eta_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    phiinp, bins, _ = plt.hist(jets_input_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                    phiout = plt.hist(jets_output_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('jet $\phi$')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_phi_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    torch.save(model.state_dict(), os.path.join(cur_report_dir, 'model_'+ str(model_name) + '.pt'))
-
-                    #os.system('mv model_pxpypz_standardized_3DLoss_beta01_latent20'+str(model_name)+'.pt '+str(dir_name))
-
-                    print('############ The minimum emdt sum for ',latent_dim,' latent vector dimensions is ',min_emdt,' ############')
-
-                if(emdg_sum <= min_emdg or stale_epochs>patience):
-
-                    min_emdg = emdg_sum
-
-                    minp, bins, _ = plt.hist(jets_input_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                    mgen = plt.hist(jets_gen_output_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black',linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('jet mass (GeV)')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_mass_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    ptinp, bins, _ = plt.hist(jets_input_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                    ptgen = plt.hist(jets_gen_output_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('jet $p_T$ (GeV)')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_pt_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    einp, bins, _ = plt.hist(jets_input_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                    egen = plt.hist(jets_gen_output_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('$jet energy$ (GeV)')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_energy_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    etainp, bins, _ = plt.hist(jets_input_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                    etagen = plt.hist(jets_gen_output_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('jet $\eta$')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_eta_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                    phiinp, bins, _ = plt.hist(jets_input_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                    phigen = plt.hist(jets_gen_output_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                    plt.ylabel("Probability (a.u.)")
-                    plt.xlabel('jet $\phi$')
-                    plt.yscale('linear')
-                    plt.legend(loc='lower right', prop={'size': 16})
-                    plt.savefig(os.path.join(cur_report_dir,'jet_gen_phi_GeV'+str(model_name)+'.pdf'), format='pdf', bbox_inches='tight')
-                    plt.clf()
-
-                torch.save(output_tensor_emdt, os.path.join(cur_model_dir, 'emdt'+str(model_name)+'.pt'))
-                torch.save(output_tensor_emdg, os.path.join(cur_model_dir, 'emdg'+str(model_name)+'.pt'))
+                print("The accuracy is {:.4f} and the max_accuracy is {:.4f}. The emd is {:.4f} and the norm_emd is {:.4f}".format(accuracy,max_accuracy,emdg_sum,norm_emdg))
 
     end_time = time.time()
     print("The total time is ",((end_time-start_time)/60.0)," minutes.")
+
+    return max_accuracy
 
 if __name__=='__main__':
     main()

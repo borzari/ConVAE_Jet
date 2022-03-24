@@ -166,12 +166,6 @@ def jet_pT(p_part):# input should be of shape[batch_size, features, Nparticles]
 
 def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min):
 
-    #print("num_features de dentro da compute loss: " + str(model.num_features))
-    #mean, logvar = model.encode(x)
-    #substituir
-    #z = model.reparameterize(mean, logvar)
-    #x_decoded = model.decode(z)
-
     x_aux = torch.clone(denorm(x, tr_max, tr_min))
     x_decoded_aux = torch.clone(denorm(x_decoded, tr_max, tr_min))
 
@@ -192,10 +186,8 @@ def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min):
 
     # Permutation-invariant Loss / NND / 3D Sparse Loss
     dist_aux = torch.pow(pdist(x_pos, x_decoded_pos),2)
-    dist = torch.Tensor(1,num_particles,num_particles).cuda()
-    dist[0] = dist_aux[0,0]
-    for i in range(1,batch_size):
-        dist = torch.cat((dist,dist_aux[i,i].view(1,num_particles,num_particles)))
+    dist_diag = torch.diagonal(dist_aux, dim1=0, dim2=1)
+    dist = torch.squeeze(torch.transpose(dist_diag.view(1,num_particles,num_particles,batch_size),dim0=0,dim1=3))
 
     # NND original version
     jet_pt_dist = torch.pow(pdist(jets_pt, jets_pt_reco),2)
@@ -239,10 +231,6 @@ def train(model, batch_data_train, optimizer):
     tr_min = model.tr_min
 
     input_train = batch_data_train[:, :, :].cuda()
-
-    #mean, logvar = model.encode(x)
-    #z = model.reparameterize(mean, logvar)
-    #x_decoded = model.decode(z)
 
     output_train, train_KLD_loss = model(input_train)
 
