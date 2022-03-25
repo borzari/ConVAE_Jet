@@ -10,6 +10,6 @@ The last commit runs with PyTorch version until 1.8.0. With version 1.10.2, it i
 
 Action items:
 - Solve heritage of the classes
-- Shorten *try except* block in ´optim.py´
-- Create optimization flag in ´optim.py´ and ´config´
-- Check the passing of the model to the compute_loss function in ´vae.py´
+- Shorten *try except* block in `optim.py`
+- Create optimization flag in `optim.py` and `config`
+- Check the passing of the model to the compute_loss function in `vae.py`
