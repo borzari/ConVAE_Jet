@@ -39,7 +39,7 @@ def inverse_standardize_t(X, tmin, tmax):
     std = tmax
     original_X = ((X * (std - mean)) + mean)
     return original_X
-    
+
 def mask_zero_padding(input_data):
     # Mask input for zero-padded particles. Set to zero values between -10^-4 and 10^-4
     px = input_data[:,0,:]
@@ -95,3 +95,11 @@ def jet_features(jets, mask_bool=False, mask=None):
     sum_vecs = vecs.sum(axis=1)
     jf = np.stack((ak.to_numpy(sum_vecs.mass), ak.to_numpy(sum_vecs.pt), ak.to_numpy(sum_vecs.energy), ak.to_numpy(sum_vecs.eta), ak.to_numpy(sum_vecs.phi)), axis=1)
     return ak.to_numpy(jf)
+
+def get_free_gpu():
+    if torch.cuda.is_available():
+        os.system('nvidia-smi -q -d Memory |grep -A4 GPU|grep Free >tmp')
+        memory_available = [int(x.split()[2]) for x in open('tmp', 'r').readlines()]
+        return "cuda:" + str(np.argmax(memory_available))
+    else:
+        return "cpu"

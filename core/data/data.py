@@ -136,23 +136,6 @@ class DataT():
         print("test_dataset.shape:  ",self.test_dataset.shape)
         print("gen_dataset.shape:   ",self.gen_dataset.shape,"\n")
 
-        #return self.train_dataset, self.valid_dataset, self.test_dataset, self.gen_dataset, tr_max, tr_min
-
-    def create_folders(self, cur_latent_dim):
-        model_name = self.dataset_description+'_'+str(cur_latent_dim)+'latent_'+str(self.n_filter)+'filters_'+str(self.n_epochs)+'epochs_'+str(self.beta).replace(".","p")+'beta_min'+str(self.num_particles)+'p_jetpt_jetmass'
-        dir_name='dir_'+str(self.vae_mode)+'_'+model_name
-        print("to dentro do create_folders: ", model_name)
-        cur_jets_dir = os.path.join(configs['paths']['jets_dir'], dir_name)
-        cur_report_dir = os.path.join(configs['paths']['report_dir'], dir_name)
-        cur_model_dir = os.path.join(configs['paths']['model_dir'], dir_name)
-
-        # create folder recursively
-        Path(cur_jets_dir).mkdir(parents=True, exist_ok=True)
-        Path(cur_report_dir).mkdir(parents=True, exist_ok=True)
-        Path(cur_model_dir).mkdir(parents=True, exist_ok=True)
-
-        return cur_jets_dir, cur_report_dir, cur_model_dir, model_name, dir_name
-
     def create_loaders(self):
         print("To dentro de loaders: ",len(self.train_dataset))
         # Create iterable data loaders
@@ -165,60 +148,6 @@ class DataT():
 
 
     ###### fim classe ##########
-
-    def generate_datasets(self):
-        train_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['train_dataset']))
-        valid_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['valid_dataset']))
-        test_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['test_dataset']))
-
-        train_dataset = train_dataset.view(len(train_dataset),1,num_features,num_particles)
-        valid_dataset = valid_dataset.view(len(valid_dataset),1,num_features,num_particles)
-        test_dataset = test_dataset.view(len(test_dataset),1,num_features,num_particles)
-
-        train_dataset = train_dataset.cpu()
-        valid_dataset = valid_dataset.cpu()
-        test_dataset = test_dataset.cpu()
-
-        #num_features = len(train_dataset[0,0]) #verificar se é necessário
-
-        for i in range(num_features):
-            tr_max.append(torch.max(train_dataset[:,0,i]))
-            tr_min.append(torch.min(train_dataset[:,0,i]))
-            if self.normalize is True:
-                train_dataset[:,0,i] = (train_dataset[:,0,i] - tr_min[i])/(tr_max[i] - tr_min[i])
-                valid_dataset[:,0,i] = (valid_dataset[:,0,i] - tr_min[i])/(tr_max[i] - tr_min[i])
-                test_dataset[:,0,i] = (test_dataset[:,0,i] - tr_min[i])/(tr_max[i] - tr_min[i])
-
-        gen_dataset = torch.zeros([test_dataset.shape[0], 1, num_features, num_particles])
-
-        return train_dataset, valid_dataset, test_dataset, gen_dataset, tr_max, tr_min
-
-#    def create_loaders(self, train_dataset, valid_dataset, test_dataset, gen_dataset):
-        # Create iterable data loaders
-#        train_loader = DataLoader(dataset=train_dataset, batch_size=self.batch_size, shuffle=True)
-#        valid_loader = DataLoader(dataset=valid_dataset, batch_size=self.batch_size, shuffle=False)
-#        test_loader = DataLoader(dataset=test_dataset, batch_size=self.batch_size, shuffle=False)
-#        gen_loader = DataLoader(dataset=gen_dataset, batch_size=self.batch_size, shuffle=False)
-#        return train_loader, valid_loader, test_loader, gen_loader
-
-    #def tr(): #solução péssima. apenas para teste
-    #    train_dataset, valid_dataset, test_dataset, gen_dataset, tr_max, tr_min = generate_datasets()
-    #    return tr_max, tr_min
-
-    def generate_folders(self, latent_dim):
-        model_name = self.dataset_description+'_'+str(self.latent_dim)+'latent_'+str(self.n_filter)+'filters_'+str(self.n_epochs)+'epochs_'+str(self.beta).replace(".","p")+'beta_min'+str(self.num_particles)+'p_jetpt_jetmass'
-        dir_name='dir_'+str(self.vae_mode)+'_'+model_name
-
-        cur_jets_dir = os.path.join(configs['paths']['jets_dir'], dir_name)
-        cur_report_dir = os.path.join(configs['paths']['report_dir'], dir_name)
-        cur_model_dir = os.path.join(configs['paths']['model_dir'], dir_name)
-
-        # create folder recursively
-        Path(cur_jets_dir).mkdir(parents=True, exist_ok=True)
-        Path(cur_report_dir).mkdir(parents=True, exist_ok=True)
-        Path(cur_model_dir).mkdir(parents=True, exist_ok=True)
-
-        return cur_jets_dir, cur_report_dir, cur_model_dir, model_name, dir_name
 
 def norm(norm_in, tr_max, tr_min):
     if configs['data']['normalize'] is True:
@@ -235,12 +164,3 @@ def denorm(denorm_in, tr_max, tr_min):
             denorm_out[:,0,i] = ((denorm_out[:,0,i] * (tr_max[i] - tr_min[i])) + tr_min[i])
         return denorm_out
     else: return denorm_in
-
-def main():
-    cur_jets_dir, cur_report_dir, cur_model_dir = generate_folders()
-    print(cur_jets_dir)
-    print(cur_report_dir)
-    print(cur_model_dir)
-
-if __name__=='__main__':
-    main()

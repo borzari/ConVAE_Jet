@@ -21,6 +21,8 @@ from coffea.nanoevents.methods import vector
 ak.behavior.update(vector.behavior)
 import mplhep as mhep
 from core.data.data import *
+from core.utils.utils import *
+
 import optuna
 from optuna.trial import TrialState
 
@@ -28,7 +30,7 @@ plt.style.use(mhep.style.CMS)
 
 torch.autograd.set_detect_anomaly(True)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+device = torch.device(get_free_gpu())
 
 def set_seed(seed):
     torch.manual_seed(seed)
