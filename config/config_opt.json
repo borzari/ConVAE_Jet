@@ -1,0 +1,106 @@
+{
+    "paths": {
+        "dataset_dir": "/data/convae_jet/datasets",
+        "save_dir": "results",
+        "jets_dir": "jets",
+        "log_dir": "logs",
+        "report_dir": "reports",
+        "model_dir": "models"
+    },
+    "data": {
+        "dataset_name": "",
+        "dataset_description": "fulldata",
+        "train_dataset": "train_data_pxpypz_g_min30p.pt",
+        "valid_dataset": "valid_data_pxpypz_g_min30p.pt",
+        "test_dataset": "test_data_pxpypz_g_min30p.pt",
+        "filename": "./dataset/phi025-025_eta025-025_train1_lasthit_20200219.csv",
+        "train_split": 0.80,
+        "normalize": true,
+	      "data_percentage": 0.1
+    },
+    "physics": {
+        "num_particles": 30,
+        "jet_type": "g"
+    },
+    "training": {
+        "n_epochs": 1000,
+        "batch_size_min": 100,
+        "batch_size_max": 100,
+        "learning_rate_min": 1e-5,
+        "learning_rate_max": 1e-1,
+        "saving_epoch": 200,
+        "n_filter": 50,
+        "n_classes": 1,
+        "latent_dim_seq": 30,
+        "alpha_min": 1e-5,
+        "alpha_max": 1.0,
+        "beta_min": 0.9,
+        "beta_max": 1.0,
+        "gamma_min": 0.1,
+        "gamma_max": 1.0,
+        "gamma_1_min": 9.0,
+        "gamma_1_max": 11.0,
+        "gamma_2_min": 9.0,
+        "gamma_2_max": 11.0,
+        "drop_prob_min": 0.0,
+        "drop_prob_max": 0.0,
+        "seed": 123456789,
+        "patience": 1,
+        "num_features": 3,
+        "latent_dim": 30,
+        "vae_mode" : "generation",
+        "validation": 0.3,
+        "save_model": true,
+        "load_model": false,
+        "use_gpu": true,
+        "show_metrics": false,
+        "shuffle": true,
+        "earlystopping": false
+    },
+    "testing": {
+        "type_optimization" : "nearest",
+        "normalise": false,
+        "tolerance": 0.02
+    },
+    "model": {
+
+        "name": "lstm",
+        "loss": "mse",
+        "metrics": ["mae","acc"],
+        "optimizer": "rmsprop",
+        "layers": [
+            {
+                "type": "lstm",
+                "neurons": 400,
+                "input_timesteps": 4,
+                "input_features": 3,
+                "return_seq": true
+            },
+            {
+                "type": "dropout",
+                "rate": 0.26
+            },
+            {
+                "type": "lstm",
+                "neurons": 400,
+                "input_timesteps": 4,
+                "input_features": 3,
+                "return_seq": false
+            },
+            {
+                "type": "dropout",
+                "rate": 0.25
+            },
+            {
+                "type": "dense",
+                "neurons": 30,
+                "activation": "relu"
+            },
+            {
+                "type": "dense",
+                "neurons": 3,
+                "activation": "linear"
+            }
+        ]
+    }
+}
