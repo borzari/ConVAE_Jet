@@ -28,8 +28,6 @@ plt.style.use(mhep.style.CMS)
 
 torch.autograd.set_detect_anomaly(True)
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
-
 from core.utils.utils import *
 from core.models.vae import *
 from core.data.data import *
@@ -42,7 +40,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="LSTM implementation ")
 
     # Dataset setting
-    parser.add_argument('--config', type=str, default='config/config_default.json', help='Configuration file')
+    parser.add_argument('--config', type=str, default='config/config_opt.json', help='Configuration file')
     parser.add_argument('--dataset', type=str, help='Path to dataset')
     parser.add_argument('--load', type=str, help='this param load model')
 
@@ -65,41 +63,28 @@ def objective(trial):
 
     # Training params
     n_epochs = configs['training']['n_epochs']
-    batch_size = configs['training']['batch_size']
-    #learning_rate = configs['training']['learning_rate']
-    learning_rate = trial.suggest_float("learning_rate", 1e-5, 1e-1)
+    num_features = configs['training']['num_features']
+    batch_size = trial.suggest_int('batch_size', configs['training']['batch_size_min'],configs['training']['batch_size_max'])
+    learning_rate = trial.suggest_float("learning_rate", configs['training']['learning_rate_min'], configs['training']['learning_rate_max'], log=True)
     saving_epoch = configs['training']['saving_epoch']
     n_filter = configs['training']['n_filter']
     n_classes = configs['training']['n_classes']
     latent_dim_seq = [configs['training']['latent_dim_seq']]
-    #beta = configs['training']['beta'] # equivalent to beta=5000 in the old setup
-    beta = trial.suggest_float("beta", 0, 1)
-
-    # Regularizer for loss penalty
-    # Jet features loss weighting
-    # gamma = configs['training']['gamma']
-    # gamma_1 = configs['training']['gamma_1']
-    # gamma_2 = configs['training']['gamma_2']
-
-    gamma = trial.suggest_float("gamma", 0, 50)
-    gamma_1 = trial.suggest_float("gamma_1", 0, 50)
-    gamma_2 = trial.suggest_float("gamma_2", 0, 50)
+    beta = trial.suggest_float("beta", configs['training']['beta_min'], configs['training']['beta_max'])
+    gamma = trial.suggest_float("gamma", configs['training']['gamma_min'], configs['training']['gamma_max'])
+    gamma_1 = trial.suggest_float("gamma_1", configs['training']['gamma_1_min'], configs['training']['gamma_1_max'])
+    gamma_2 = trial.suggest_float("gamma_2", configs['training']['gamma_2_min'], configs['training']['gamma_2_max'])
     #gamma_2 = 1.0
     n = 0 # this is to count the epochs to turn on/off the jet pt contribution to the loss
+    min_emd = 0.
 
     # Particle features loss weighting
-    #alpha = configs['training']['alpha']
-    alpha = trial.suggest_float("alpha", 0, 1)
+    alpha = trial.suggest_float("alpha", configs['training']['alpha_min'], configs['training']['alpha_max'])
     # Starting time
     start_time = time.time()
 
-    # Plots' colors
-    spdred = (177/255, 4/255, 14/255)
-    spdblue = (0/255, 124/255, 146/255)
-    spdyellow = (234/255, 171/255, 0/255)
-
     # Probability to keep a node in the dropout layer
-    drop_prob = configs['training']['drop_prob']
+    drop_prob = trial.suggest_float("drop_prob", configs['training']['drop_prob_min'], configs['training']['drop_prob_max'])
 
     # Set patience for Early Stopping
     patience = n_epochs
@@ -110,10 +95,8 @@ def objective(trial):
     max_accuracy = 0.0
     norm_emdg = 1.0
 
-    dataT = DataT()
+    dataT = DataT(trial)
     print("tr_max depois da instância: ",dataT.tr_max)
-
-    #train_dataset, valid_dataset, test_dataset, gen_dataset, tr_max, tr_min = data.generate_datasets()
 
     #for n_filter in seq_n_filter:
     for latent_dim in latent_dim_seq:
@@ -130,10 +113,13 @@ def objective(trial):
         output_tensor_emdt = torch.Tensor()
         output_tensor_emdg = torch.Tensor()
 
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
 
         ###################################### TRAINING #######################################
         # Initialize model and load it on GPU
-        model = ConvNet(configs, dataT.tr_max, dataT.tr_min)
+        model = ConvNet(configs, dataT.tr_max, dataT.tr_min, trial)
+        #model = model.cuda()
         model = model.to(device)
 
         # Optimizer
@@ -243,7 +229,7 @@ def objective(trial):
                 stale_epochs = 0
             else:
                 stale_epochs += 1
-                print('stale_epochs:', stale_epochs)
+                #print('stale_epochs:', stale_epochs)
 
             print('Epoch: {} -- Train loss: {} -- Validation loss: {}'.format(epoch, tr_loss_aux.cpu().detach().item()/(len(train_loader)-1), val_loss_aux.cpu().detach().item()/(len(valid_loader)-1)))
 
@@ -508,13 +494,22 @@ def objective(trial):
                 emdg_e = wasserstein_distance(egen,einp)
                 emdg_eta = wasserstein_distance(etagen,etainp)
                 emdg_phi = wasserstein_distance(phigen,phiinp)
-                emdg_sum = emdg_m + emdg_pt + emdg_e + emdg_eta + emdg_phi
+                emdg_sum = float(emdg_m + emdg_pt + emdg_e + emdg_eta + emdg_phi)
 
                 print(emdg_sum,norm_emdg)
 
                 if epoch+1 == saving_epoch:
                     norm_emdg = emdg_sum
 
+                if emdg_sum < min_emdg:
+                    min_emdg = emdg_sum
+
+                print("################################")
+                print("Current EMD:",emdg_sum)
+                print("Min. EMD:   ",min_emdg)
+                print("################################")
+
+                '''
                 accuracy = 1 - (emdg_sum/norm_emdg)
 
                 if accuracy >= max_accuracy:
@@ -524,7 +519,9 @@ def objective(trial):
 
                 ##### send accuracy from current epoch to optimizer
                 trial.report(accuracy, epoch)
-
+                '''
+                ##### send accuracy from current epoch to optimizer
+                trial.report(emdg_sum, epoch)
                 # Handle pruning based on the intermediate value.
                 if trial.should_prune():
                     raise optuna.exceptions.TrialPruned()
@@ -534,15 +531,16 @@ def objective(trial):
     print("###########################################################")
     print()
 
-    return max_accuracy
+    #return max_accuracy
+    return min_emd
 
 def main():
     study = optuna.create_study(
-    study_name='opt_convae_v1',
+    study_name='opt_convae_v2',
     storage='mysql://usr_optuna:sY8d%5kq@top01/db_optuna',
     load_if_exists=True,
-    direction="maximize")
-    study.optimize(objective, n_trials=1000, timeout=6000)
+    direction="minimize")
+    study.optimize(objective, n_trials=None, timeout=None)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
     complete_trials = study.get_trials(deepcopy=False, states=[TrialState.COMPLETE])
