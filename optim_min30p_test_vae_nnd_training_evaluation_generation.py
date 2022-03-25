@@ -149,7 +149,7 @@ def objective(trial):
         emdg_epoch = []
         fifty_epoch = []
 
-        min_loss, stale_epochs, min_emdt, min_emdg = 999999.0, 0, 9999999.0, 9999999.0
+        min_loss, stale_epochs, min_emdt, min_emdg = 999999.0, 0, 9999999.0, np.pinf
 
         for epoch in range(n_epochs):
 
@@ -496,16 +496,17 @@ def objective(trial):
                 emdg_phi = wasserstein_distance(phigen,phiinp)
                 emdg_sum = float(emdg_m + emdg_pt + emdg_e + emdg_eta + emdg_phi)
 
-                print(emdg_sum,norm_emdg)
+                #print(emdg_sum,norm_emdg)
 
-                if epoch+1 == saving_epoch:
+                if emdg_sum == np.nan:
+                    norm_emdg = 1.0
+                else:
                     norm_emdg = emdg_sum
 
-                if emdg_sum < min_emdg:
-                    min_emdg = emdg_sum
+                if norm_emdg < min_emdg: min_emdg = norm_emdg
 
                 print("################################")
-                print("Current EMD:",emdg_sum)
+                print("Current EMD:",norm_emdg)
                 print("Min. EMD:   ",min_emdg)
                 print("################################")
 
@@ -521,7 +522,7 @@ def objective(trial):
                 trial.report(accuracy, epoch)
                 '''
                 ##### send accuracy from current epoch to optimizer
-                trial.report(emdg_sum, epoch)
+                trial.report(norm_emdg, epoch)
                 # Handle pruning based on the intermediate value.
                 if trial.should_prune():
                     raise optuna.exceptions.TrialPruned()
@@ -532,7 +533,7 @@ def objective(trial):
     print()
 
     #return max_accuracy
-    return min_emd
+    return min_emdg
 
 def main():
     study = optuna.create_study(
