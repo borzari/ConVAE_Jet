@@ -13,3 +13,5 @@ Action items:
 - Shorten *try except* block in `optim.py`
 - Create optimization flag in `optim.py` and `config`
 - Check the passing of the model to the compute_loss function in `vae.py`
+- Try to use the log of the jet variables for calculating the emd
+  - Use a fixed range in the making of the histograms at first and see if it is reasonable
