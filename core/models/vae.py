@@ -21,6 +21,7 @@ from coffea.nanoevents.methods import vector
 ak.behavior.update(vector.behavior)
 import mplhep as mhep
 from core.data.data import *
+import jetnet as jt
 
 plt.style.use(mhep.style.CMS)
 
@@ -166,30 +167,56 @@ def jet_pT(p_part):# input should be of shape[batch_size, features, Nparticles]
 # def compute_loss(denorm(x), denorm(x_decoded), KL_divergence, tr_max, tr_min):
 
 def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min):
-
     x_aux = torch.clone(denorm(x, tr_max, tr_min))
     x_decoded_aux = torch.clone(denorm(x_decoded, tr_max, tr_min))
 
     pdist = nn.PairwiseDistance(p=2) # Euclidean distance
     x_pos = torch.zeros(batch_size,1,num_features,num_particles).to(device) #variaveis do config
     x_pos = x_aux.to(device) # [100, 1, 3, 30]
+    
+    #EMD BLOCK:
+    x_emd = torch.permute(torch.squeeze(x_pos,1),(0,2,1)) #[100,30,3]
+    x_emd = x_emd.cpu()
+    #END EMD BLOCK
+    
     jets_pt = (jet_pT(x_pos[:,0,:,:]).unsqueeze(1).to(device))#/jet_pt_std # [100, 1]
     jets_mass = (jet_mass(x_pos[:,0,:,:]).unsqueeze(1).to(device))#/jet_mass_std
     x_pos = torch.transpose(x_pos,dim0=2,dim1=3)
 
     x_decoded_pos = torch.zeros(batch_size,1,num_features,num_particles).to(device)
     x_decoded_pos = x_decoded_aux.to(device) # [100, 1, 3, 30]
+    
+    #EMD BLOCK:
+    x_decoded_emd = torch.permute(torch.squeeze(x_decoded_pos,1),(0,2,1)) #[100,30,3]
+    x_decoded_emd = x_decoded_emd.cpu()
+    #END EMD BLOCK
+    
     jets_pt_reco = (jet_pT(x_decoded_pos[:,0,:,:]).unsqueeze(1).to(device))#/jet_pt_std # [100, 1]
     jets_mass_reco = (jet_mass(x_decoded_pos[:,0,:,:]).unsqueeze(1).to(device))#/jet_mass_std
     x_decoded_pos = torch.transpose(x_decoded_pos,dim0=2,dim1=3)
     x_decoded_pos = x_decoded_pos.view(batch_size, 1, num_particles, 1, num_features)
     x_decoded_pos = x_decoded_pos.repeat(1,1,1,num_particles,1)
 
+    #EMD BLOCK:
+    #Objeto da classe EMDLoss com o método "qpth" (método que está rodando) e o paramentro "L2"(pelo que eu vi esse parametro é mais rapido...
+    emd = jt.losses.EMDLoss("qpth",num_particles,"L2")
+
+    #Tensor com a emd por jato
+    tensor_emd = emd.forward(x_emd,x_decoded_emd,False) #[100.]
+
+    #Soma todas as entradas, divide pelo batch_size, transforma em escalar e deixa com apenas 3 casas decimais
+    dist_emd = round(((torch.sum(tensor_emd)/batch_size).item()),3)
+
+    #parametro multiplicativo(depois pode ser otimizado)
+    beta_emd = 1 
+    #END EMD BLOCK
+
+
     # Permutation-invariant Loss / NND / 3D Sparse Loss
     dist_aux = torch.pow(pdist(x_pos, x_decoded_pos),2)
     dist_diag = torch.diagonal(dist_aux, dim1=0, dim2=1)
     dist = torch.squeeze(torch.transpose(dist_diag.view(1,num_particles,num_particles,batch_size),dim0=0,dim1=3))
-
+    
     # NND original version
     jet_pt_dist = torch.pow(pdist(jets_pt, jets_pt_reco),2)
     jet_mass_dist = torch.pow(pdist(jets_mass, jets_mass_reco),2)
@@ -213,15 +240,14 @@ def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min):
 
     # Average symmetrical euclidean distance per image
     eucl = (torch.sum(eucl) / batch_size)
-    reconstruction_loss = - eucl
-
+    reconstruction_loss = - eucl - beta_emd * dist_emd #TERMO DA EMD ADICIONADO A RECONSTRUÇÃO
+    
     # Separate particles' loss components to plot them
     #KL_divergence = (0.5 * torch.sum(torch.pow(mean, 2) + torch.exp(logvar) - logvar - 1.0).sum() / batch_size)
     ELBO = ((1-beta)*reconstruction_loss) - (beta*KL_divergence)
     loss = - ELBO
 
     return loss, eucl, loss_rec_p, loss_rec_j, jet_pt_dist, jet_mass_dist
-
 ##### Training function per batch #####
 def train(model, batch_data_train, optimizer):
     """train_loss = 0.0
