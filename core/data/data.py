@@ -75,9 +75,8 @@ normalize = configs['data']['normalize']
 # Regularizer for loss penalty
 # Jet features loss weighting
 gamma = configs['training']['gamma']
-gamma_1 = configs['training']['gamma_1']
-gamma_2 = configs['training']['gamma_2']
-#gamma_2 = 1.0
+#gamma_1 = configs['training']['gamma_1']
+#gamma_2 = configs['training']['gamma_2']
 n = 0 # this is to count the epochs to turn on/off the jet pt contribution to the loss
 
 # Particle features loss weighting
@@ -98,9 +97,28 @@ class DataT():
         self.valid_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['valid_dataset']))
         self.test_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['test_dataset']))
 
-        self.train_dataset = self.train_dataset[:int(len(self.train_dataset)*configs['data']['data_percentage'])]
-        self.valid_dataset = self.valid_dataset[:int(len(self.valid_dataset)*configs['data']['data_percentage'])]
-        self.test_dataset = self.test_dataset[:int(len(self.test_dataset)*configs['data']['data_percentage'])]
+        # This calculates the value of gamma_2 using the ratio between the pt and the mass of the jets, with the datasets of 150p
+        self.gamma_1 = 1.0
+        px_aux = self.train_dataset[:,0]
+        py_aux = self.train_dataset[:,1]
+        pz_aux = self.train_dataset[:,2]
+        mass_aux = np.zeros((pz_aux.shape[0], 150))
+
+        input_data = np.stack((px_aux, py_aux, pz_aux, mass_aux), axis=2)
+        hadr_input_data = ptetaphim_particles(input_data)
+        jets_input_data = jet_features(hadr_input_data)
+
+        jets_pt = jets_input_data[:,1]
+        jets_mass = jets_input_data[:,0]
+
+        jets_pt_mean = np.mean(jets_pt)
+        jets_mass_mean = np.mean(jets_mass)
+
+        self.gamma_2 = jets_pt_mean/jets_mass_mean
+
+        self.train_dataset = self.train_dataset[:int(len(self.train_dataset)*configs['data']['data_percentage']),:,:num_particles]
+        self.valid_dataset = self.valid_dataset[:int(len(self.valid_dataset)*configs['data']['data_percentage']),:,:num_particles]
+        self.test_dataset = self.test_dataset[:int(len(self.test_dataset)*configs['data']['data_percentage']),:,:num_particles]
 
         self.train_dataset = self.train_dataset.view(len(self.train_dataset),1,num_features,num_particles)
         self.valid_dataset = self.valid_dataset.view(len(self.valid_dataset),1,num_features,num_particles)
@@ -110,7 +128,6 @@ class DataT():
         self.valid_dataset = self.valid_dataset.cpu()
         self.test_dataset = self.test_dataset.cpu()
 
-        #num_features = len(train_dataset[0,0]) #verificar se é necessário
 
         for i in range(num_features):
             self.tr_max.append(torch.max(self.train_dataset[:,0,i]))
