@@ -147,7 +147,7 @@ class DataT():
         #return self.train_dataset, self.valid_dataset, self.test_dataset, self.gen_dataset, tr_max, tr_min
 
     def create_folders(self, cur_latent_dim):
-        model_name = dataset_description+'_'+str(cur_latent_dim)+'latent_'+str(n_filter)+'filters_'+str(n_epochs)+'epochs_'+str(beta).replace(".","p")+'beta_min'+str(num_particles)+'p_jetpt_jetmass'
+        model_name = dataset_description+'_'+jet_type+'jets_'+str(cur_latent_dim)+'latent_'+str(n_filter)+'filters_'+str(n_epochs)+'epochs_'+str(beta).replace(".","p")+'beta_'+str(num_particles)+'p_jetpt_jetmass'
         dir_name='dir_'+str(vae_mode)+'_'+model_name
         print("to dentro do create_folders: ", model_name)
         cur_jets_dir = os.path.join(configs['paths']['jets_dir'], dir_name)
