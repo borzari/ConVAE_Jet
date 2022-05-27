@@ -52,7 +52,8 @@ class ConvNet(nn.Module):
         # Hyperparameters
         # Input data specific params
         self.num_features = configs['training']['num_features']
-        self.latent_dim = configs['training']['latent_dim']
+        #self.latent_dim = configs['training']['latent_dim']
+        self.latent_dim = trial.suggest_int('latent_dim', configs['training']['latent_dim_min'],configs['training']['latent_dim_max'],step=10)
 
         print("num_features: "+str(self.num_features))
         print("latent_dim: "+str(self.latent_dim))
@@ -65,11 +66,15 @@ class ConvNet(nn.Module):
         self.batch_size = trial.suggest_int('batch_size', configs['training']['batch_size_min'],configs['training']['batch_size_max'])
         self.learning_rate = trial.suggest_float("learning_rate", configs['training']['learning_rate_min'], configs['training']['learning_rate_max'], log=True)
         self.saving_epoch = configs['training']['saving_epoch']
-        self.n_filter = configs['training']['n_filter']
+        self.n_filter = trial.suggest_int('n_filter', configs['training']['n_filter_min'],configs['training']['n_filter_max'],step=5)
         self.n_classes = configs['training']['n_classes']
+        self.n_linear = trial.suggest_int('n_linear', configs['training']['n_linear_min'],configs['training']['n_linear_max'],step=100)
+        self.n_kernel = trial.suggest_int('n_kernel', configs['training']['n_kernel_min'],configs['training']['n_kernel_max'])
         self.latent_dim_seq = [configs['training']['latent_dim_seq']]
         self.beta = trial.suggest_float("beta", configs['training']['beta_min'], configs['training']['beta_max'])
-
+        self.n_layers = trial.suggest_int("n_layers", configs['training']['n_layers_min'], configs['training']['n_layers_max'])
+        self.act_function = trial.suggest_categorical("act_function",configs['training']['act_function'])
+        
         # Regularizer for loss penalty
         # Jet features loss weighting
         self.gamma = trial.suggest_float("gamma", configs['training']['gamma_min'], configs['training']['gamma_max'])
@@ -88,47 +93,85 @@ class ConvNet(nn.Module):
 
         set_seed(seed)
 
-        self.conv1 = nn.Conv2d(1, 1 * self.n_filter, kernel_size=(self.num_features,5), stride=(1), padding=(0))
-        self.conv2 = nn.Conv2d(1 * self.n_filter, 2 * self.n_filter, kernel_size=(1,5), stride=(1), padding=(0))
-        self.conv3 = nn.Conv2d(2 * self.n_filter, 4 * self.n_filter, kernel_size=(1,5), stride=(1), padding=(0))
+        #self.conv1 = nn.Conv2d(1, 1 * self.n_filter, kernel_size=(self.num_features,self.n_kernel), stride=(1), padding=(0))
+        #self.conv2 = nn.Conv2d(1 * self.n_filter, 2 * self.n_filter, kernel_size=(1,self.n_kernel), stride=(1), padding=(0))
+        #self.conv3 = nn.Conv2d(2 * self.n_filter, 4 * self.n_filter, kernel_size=(1,self.n_kernel), stride=(1), padding=(0))
         #
-        self.fc1 = nn.Linear(1 * int(self.num_particles - 12) * 4 * self.n_filter, 1500)
-        self.fc2 = nn.Linear(1500, 2 * self.latent_dim)
+        layers_enc = []
+        for i in range(self.n_layers): 
+            if i==0: layers_enc.append(nn.Conv2d(1, (2**i) * self.n_filter, kernel_size=(self.num_features,self.n_kernel), stride=(1), padding=(0)))
+            else: layers_enc.append(nn.Conv2d((2**(i-1)) * self.n_filter, (2**i) * self.n_filter, kernel_size=(1,self.n_kernel), stride=(1), padding=(0)))
+            #layers_enc.append(nn.ReLU())
+            if self.act_function=="ReLU": layers_enc.append(nn.ReLU())
+            if self.act_function=="GeLU": layers_enc.append(nn.GELU())
+            if self.act_function=="ELU": layers_enc.append(nn.ELU())
+            if self.act_function=="SELU": layers_enc.append(nn.SELU())
+            if self.act_function=="LeakyReLU": layers_enc.append(nn.LeakyReLU(0.1))
+        self.enc_conv_layers = nn.Sequential(*layers_enc)
         #
-        self.fc3 = nn.Linear(self.latent_dim, 1500)
-        self.fc4 = nn.Linear(1500, 1 * int(self.num_particles - 12) * 4*self.n_filter)
-        self.conv4 = nn.ConvTranspose2d(4 * self.n_filter, 2 * self.n_filter, kernel_size=(1,5), stride=(1), padding=(0))
-        self.conv5 = nn.ConvTranspose2d(2 * self.n_filter, 1 * self.n_filter, kernel_size=(1,5), stride=(1), padding=(0))
-        self.conv6 = nn.ConvTranspose2d(1 * self.n_filter, 1, kernel_size=(self.num_features,5), stride=(1), padding=(0))
-
+        self.fc1 = nn.Linear(1 * int(self.num_particles - ((self.n_kernel-1)*self.n_layers)) * (2**(self.n_layers-1)) * self.n_filter, self.n_linear)
+        self.fc2 = nn.Linear(self.n_linear, 2 * self.latent_dim)
+        #
+        self.fc3 = nn.Linear(self.latent_dim, self.n_linear)
+        self.fc4 = nn.Linear(self.n_linear, 1 * int(self.num_particles - ((self.n_kernel-1)*self.n_layers)) * (2**(self.n_layers-1)) *self.n_filter)
+        #self.conv4 = nn.ConvTranspose2d(4 * self.n_filter, 2 * self.n_filter, kernel_size=(1,self.n_kernel), stride=(1), padding=(0))
+        #self.conv5 = nn.ConvTranspose2d(2 * self.n_filter, 1 * self.n_filter, kernel_size=(1,self.n_kernel), stride=(1), padding=(0))
+        #self.conv6 = nn.ConvTranspose2d(1 * self.n_filter, 1, kernel_size=(self.num_features,self.n_kernel), stride=(1), padding=(0))
+        #
+        layers_dec = []
+        for i in range(self.n_layers): 
+            if i==self.n_layers-1: layers_dec.append(nn.ConvTranspose2d(self.n_filter, 1, kernel_size=(self.num_features,self.n_kernel), stride=(1), padding=(0)))
+            else: layers_dec.append(nn.ConvTranspose2d((2**(self.n_layers-i-1)) * self.n_filter, (2**(self.n_layers-i-2)) * self.n_filter, kernel_size=(1,self.n_kernel), stride=(1), padding=(0)))
+            if i != (self.n_layers-1):# layers_dec.append(nn.ReLU())
+                if self.act_function=="ReLU": layers_dec.append(nn.ReLU())
+                if self.act_function=="GeLU": layers_dec.append(nn.GELU())
+                if self.act_function=="ELU": layers_dec.append(nn.ELU())
+                if self.act_function=="SELU": layers_dec.append(nn.SELU())
+                if self.act_function=="LeakyReLU": layers_dec.append(nn.LeakyReLU(0.1))
+        self.dec_conv_layers = nn.Sequential(*layers_dec)
+        
         self.drop = nn.Dropout(self.drop_prob)
+        
+        print("Latent dim: {} -- N layers: {} -- N filter: {} -- N kernel: {} -- N linear: {}".format(self.latent_dim,self.n_layers,self.n_filter,self.n_kernel,self.n_linear))
 
     def encode(self, x):
-        out = self.conv1(x)
-        out = torch.relu(out)
-        out = self.conv2(out)
-        out = torch.relu(out)
-        out = self.conv3(out)
-        out = torch.relu(out)
+        #out = self.conv1(x)
+        #out = torch.relu(out)
+        #out = self.conv2(out)
+        #out = torch.relu(out)
+        #out = self.conv3(out)
+        #out = torch.relu(out)
+        #print("Enc1: {}".format(x.shape))
+        out = self.enc_conv_layers(x)
+        #print("Enc2: {}".format(out.shape))
         out = out.view(out.size(0), -1) # flattening
+        #print("Enc3: {}".format(out.shape))
         out = self.fc1(out)
         out = torch.relu(out)
+        #print("Enc4: {}".format(out.shape))
         out = self.fc2(out)
+        #print("Enc5: {}".format(out.shape))
         mean = out[:,:self.latent_dim]
         logvar = 1e-6 + (out[:,self.latent_dim:])
         return mean, logvar
 
     def decode(self, z):
+        #print("Dec1: {}".format(z.shape))
         out = self.fc3(z)
         out = torch.relu(out)
+        #print("Dec2: {}".format(out.shape))
         out = self.fc4(out)
         out = torch.relu(out)
-        out = out.view(self.batch_size, 4 * self.n_filter, 1, int(self.num_particles - 12)) # reshaping
-        out = self.conv4(out)
-        out = torch.relu(out)
-        out = self.conv5(out)
-        out = torch.relu(out)
-        out = self.conv6(out)
+        #print("Dec3: {}".format(out.shape))
+        out = out.view(self.batch_size, (2**(self.n_layers-1)) * self.n_filter, 1, int(self.num_particles - ((self.n_kernel-1)*self.n_layers))) # reshaping
+        #out = self.conv4(out)
+        #out = torch.relu(out)
+        #out = self.conv5(out)
+        #out = torch.relu(out)
+        #out = self.conv6(out)
+        #print("Dec4: {}".format(out.shape))
+        out = self.dec_conv_layers(out)
+        #print("Dec5: {}".format(out.shape))
         out = torch.sigmoid(out)
         return out
 

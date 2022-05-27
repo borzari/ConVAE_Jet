@@ -68,7 +68,7 @@ def objective(trial):
         batch_size = trial.suggest_int('batch_size', configs['training']['batch_size_min'],configs['training']['batch_size_max'])
         learning_rate = trial.suggest_float("learning_rate", configs['training']['learning_rate_min'], configs['training']['learning_rate_max'], log=True)
         saving_epoch = configs['training']['saving_epoch']
-        n_filter = configs['training']['n_filter']
+        #n_filter = configs['training']['n_filter']
         n_classes = configs['training']['n_classes']
         latent_dim_seq = [configs['training']['latent_dim_seq']]
         beta = trial.suggest_float("beta", configs['training']['beta_min'], configs['training']['beta_max'])
@@ -120,6 +120,7 @@ def objective(trial):
             model = ConvNet(configs, dataT.tr_max, dataT.tr_min, trial)
             #model = model.cuda()
             model = model.to(device)
+            print(model)
 
             # Optimizer
             optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -149,7 +150,7 @@ def objective(trial):
             fifty_epoch = []
 
             min_loss, stale_epochs, min_emdt, min_emdg = 999999.0, 0, 9999999.0, np.PINF
-
+            
             for epoch in range(n_epochs):
 
                 n=n+1
@@ -169,18 +170,18 @@ def objective(trial):
                 val_loss_aux = 0.0
                 val_kl_aux = 0.0
                 val_rec_aux = 0.0
-
+                
                 for y, (jets_train) in enumerate(train_loader):
 
                     if y == (len(train_loader) - 1):
                         break
-
+                        
                     # Run train function on batch data
                     tr_inputs, tr_outputs, tr_loss, tr_kl, tr_eucl, tr_reco_p, tr_reco_j, tr_reco_pt, tr_rec_mass  = train(model, jets_train, optimizer)
                     tr_loss_aux += tr_loss
                     tr_kl_aux += tr_kl
                     tr_rec_aux += tr_eucl
-
+                    
                     # Individual loss components
                     tr_rec_p_aux += tr_reco_p
                     tr_rec_j_aux += tr_reco_j
@@ -534,11 +535,15 @@ def objective(trial):
         return 1.
 
 def main():
-    study = optuna.create_study(
-    study_name='opt_convae_v2',
-    storage='mysql://usr_optuna:sY8d%5kq@top01/db_optuna',
-    load_if_exists=True,
-    direction="minimize")
+    #study = optuna.create_study(
+    #study_name='opt_convae_updates',
+    #storage='mysql://usr_optuna:sY8d%5kq@top01/db_optuna',
+    #load_if_exists=True,
+    #direction="minimize")
+    study = optuna.create_study(study_name='opt_update3',
+                           storage='sqlite:///test_optim.db',
+                           load_if_exists=True,
+                           direction="maximize")
     study.optimize(objective, n_trials=None, timeout=None)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])

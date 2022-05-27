@@ -82,10 +82,10 @@ class DataT():
         # Training params
         self.n_epochs = configs['training']['n_epochs']
         self.batch_size = trial.suggest_int('batch_size', configs['training']['batch_size_min'],configs['training']['batch_size_max'])
-        self.n_filter = configs['training']['n_filter']
+        #self.n_filter = configs['training']['n_filter']
         self.n_classes = configs['training']['n_classes']
         self.latent_dim_seq = [configs['training']['latent_dim_seq']]
-        self.latent_dim = configs['training']['latent_dim']
+        #self.latent_dim = configs['training']['latent_dim']
         self.beta = trial.suggest_float("beta", configs['training']['beta_min'], configs['training']['beta_max'])
         self.num_features = configs['training']['num_features']
         self.vae_mode = configs['training']['vae_mode']
