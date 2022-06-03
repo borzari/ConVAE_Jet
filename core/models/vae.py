@@ -28,14 +28,6 @@ torch.autograd.set_detect_anomaly(True)
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-turnPtOnEpoch = configs['training']['turn_pt_on_epoch']
-turnPtOnBool = configs['training']['turn_pt_on_bool']
-
-dataT = DataT()
-
-gamma_1 = dataT.gamma_1
-gamma_2 = dataT.gamma_2
-
 def set_seed(seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
@@ -77,6 +69,9 @@ class ConvNet(nn.Module):
         # Regularizer for loss penalty
         # Jet features loss weighting
         gamma = configs['training']['gamma']
+        gamma_1 = configs['training']['gamma_1']
+        gamma_2 = configs['training']['gamma_2']
+        #gamma_2 = 1.0
         n = 0 # this is to count the epochs to turn on/off the jet pt contribution to the loss
 
         # Particle features loss weighting
@@ -171,7 +166,7 @@ def jet_pT(p_part):# input should be of shape[batch_size, features, Nparticles]
 # Custom loss function VAtrE
 # def compute_loss(denorm(x), denorm(x_decoded), KL_divergence, tr_max, tr_min):
 
-def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min, isPt):
+def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min):
 
     x_aux = torch.clone(denorm(x, tr_max, tr_min))
     x_decoded_aux = torch.clone(denorm(x_decoded, tr_max, tr_min))
@@ -208,11 +203,7 @@ def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min, isPt):
 
     # Loss per jet (batch size)
     loss_rec_p = alpha*(torch.sum(eucl, dim=1))
-    loss_rec_j = 0.0
-    if isPt:
-        loss_rec_j = gamma*(gamma_1*(jet_pt_dist) + gamma_2*(jet_mass_dist))
-    else:
-        loss_rec_j = gamma*(gamma_2*(jet_mass_dist))
+    loss_rec_j = gamma*(gamma_1*(jet_pt_dist) + gamma_2*(jet_mass_dist))
     eucl = loss_rec_p + loss_rec_j  # [100]
 
     # Loss individual components
@@ -233,7 +224,7 @@ def compute_loss(x, x_decoded, KL_divergence, tr_max, tr_min, isPt):
     return loss, eucl, loss_rec_p, loss_rec_j, jet_pt_dist, jet_mass_dist
 
 ##### Training function per batch #####
-def train(model, batch_data_train, optimizer, epoch):
+def train(model, batch_data_train, optimizer):
     """train_loss = 0.0
     train_KLD_loss = 0.0
     train_reco_loss = 0.0"""
@@ -246,10 +237,7 @@ def train(model, batch_data_train, optimizer, epoch):
     output_train, train_KLD_loss = model(input_train)
 
     # loss per batch
-    if epoch < turnPtOnEpoch:
-        train_loss, train_reco_loss, train_reco_loss_p, train_reco_loss_j, train_reco_loss_pt, train_reco_loss_mass  = compute_loss(input_train, output_train, train_KLD_loss, tr_max, tr_min, isPt=turnPtOnBool)
-    else:
-        train_loss, train_reco_loss, train_reco_loss_p, train_reco_loss_j, train_reco_loss_pt, train_reco_loss_mass  = compute_loss(input_train, output_train, train_KLD_loss, tr_max, tr_min, isPt=True)
+    train_loss, train_reco_loss, train_reco_loss_p, train_reco_loss_j, train_reco_loss_pt, train_reco_loss_mass  = compute_loss(input_train, output_train, train_KLD_loss, tr_max, tr_min)
 
     # Backprop and perform Adam optimisation
     # Backpropagation
@@ -261,7 +249,7 @@ def train(model, batch_data_train, optimizer, epoch):
     return input_train, output_train, train_loss, train_KLD_loss, train_reco_loss, train_reco_loss_p, train_reco_loss_j, train_reco_loss_pt, train_reco_loss_mass
 
 ##### Validation function per batch #####
-def validate(model, batch_data_valid, epoch):
+def validate(model, batch_data_valid):
     """valid_loss = 0
     valid_KLD_loss = 0
     valid_reco_loss = 0"""
@@ -278,15 +266,12 @@ def validate(model, batch_data_valid, epoch):
         x_decoded, KL_divergence = model(input_valid)
 
         # loss per batch
-        if epoch < turnPtOnEpoch:
-            valid_loss, valid_reco_loss, valid_reco_loss_p, valid_reco_loss_j, valid_reco_loss_pt, valid_reco_loss_mass = compute_loss(x_decoded, input_valid, KL_divergence, model.tr_max, model.tr_min, isPt=turnPtOnBool)
-        else:
-            valid_loss, valid_reco_loss, valid_reco_loss_p, valid_reco_loss_j, valid_reco_loss_pt, valid_reco_loss_mass = compute_loss(x_decoded, input_valid, KL_divergence, model.tr_max, model.tr_min, isPt=True)
+        valid_loss, valid_reco_loss, valid_reco_loss_p, valid_reco_loss_j, valid_reco_loss_pt, valid_reco_loss_mass = compute_loss(x_decoded, input_valid, KL_divergence, model.tr_max, model.tr_min)
 
         return valid_loss, KL_divergence, valid_reco_loss
 
 ##### Test function #####
-def test_unseed_data(model, batch_data_test, epoch):
+def test_unseed_data(model, batch_data_test):
 
     tr_max = model.tr_max
     tr_min = model.tr_min
@@ -297,9 +282,5 @@ def test_unseed_data(model, batch_data_test, epoch):
         input_test = batch_data_test.to(device)
         x_decoded, KL_divergence = model(input_test)
 
-        if epoch < turnPtOnEpoch:
-            test_loss, test_reco_loss, loss_particle, loss_jet, jet_pt_loss, jet_mass_loss = compute_loss(x_decoded, input_test, KL_divergence, tr_max, tr_min, isPt=turnPtOnBool)
-        else:
-            test_loss, test_reco_loss, loss_particle, loss_jet, jet_pt_loss, jet_mass_loss = compute_loss(x_decoded, input_test, KL_divergence, tr_max, tr_min, isPt=True)
-    
+        test_loss, test_reco_loss, loss_particle, loss_jet, jet_pt_loss, jet_mass_loss = compute_loss(x_decoded, input_test, KL_divergence, tr_max, tr_min)
     return input_test, x_decoded, test_loss, KL_divergence, test_reco_loss
