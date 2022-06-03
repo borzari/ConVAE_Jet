@@ -95,3 +95,12 @@ def jet_features(jets, mask_bool=False, mask=None):
     sum_vecs = vecs.sum(axis=1)
     jf = np.stack((ak.to_numpy(sum_vecs.mass), ak.to_numpy(sum_vecs.pt), ak.to_numpy(sum_vecs.energy), ak.to_numpy(sum_vecs.eta), ak.to_numpy(sum_vecs.phi)), axis=1)
     return ak.to_numpy(jf)
+
+def part_flatten(jet):
+    # jet has shape (num_jets, num_particles, num_features)
+    jetx = jet[:,:,0].flatten()
+    jety = jet[:,:,1].flatten()
+    jetz = jet[:,:,2].flatten()
+    jet_flat = np.stack((jetx,jety,jetz),axis=1)
+    # jet_flat has shape (num_jets*num_particles, num_features)
+    return jet_flat
