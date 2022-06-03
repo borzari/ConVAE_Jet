@@ -32,7 +32,7 @@ from core.utils.utils import *
 from core.models.vae import *
 from core.data.data import *
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def parse_args():
     """Parse arguments."""
@@ -566,45 +566,25 @@ def main():
                 jets_output_data = jet_features(hadr_output_data)
                 jets_gen_output_data = jet_features(hadr_gen_output_data)
 
-                minp, bins, _ = plt.hist(jets_input_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                mout = plt.hist(jets_output_data[:,0], bins=100, range=[0, 400], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
+                minp = np.histogram(jets_input_data[:,0], bins=100, range = [0, 400])[0]
+                mout = np.histogram(jets_output_data[:,0], bins=100, range=[0, 400])[0]
+                mgen = np.histogram(jets_gen_output_data[:,0], bins=100, range = [0, 400])[0]
 
-                minp, bins, _ = plt.hist(jets_input_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Input Test', color = spdred,linewidth=1.5)
-                mgen = plt.hist(jets_gen_output_data[:,0], bins=100, range = [0, 400], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black',linewidth=1.5)
-                plt.clf()
+                ptinp = np.histogram(jets_input_data[:,1], bins=100, range=[0, 3000])[0]
+                ptout = np.histogram(jets_output_data[:,1], bins=100, range=[0, 3000])[0]
+                ptgen = np.histogram(jets_gen_output_data[:,1], bins=100, range=[0, 3000])[0]
 
-                ptinp, bins, _ = plt.hist(jets_input_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                ptout = plt.hist(jets_output_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
+                einp = np.histogram(jets_input_data[:,2], bins=100, range = [200,4000])[0]
+                eout = np.histogram(jets_output_data[:,2], bins=100, range = [200,4000])[0]
+                egen = np.histogram(jets_gen_output_data[:,2], bins=100, range = [200,4000])[0]
 
-                ptinp, bins, _ = plt.hist(jets_input_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                ptgen = plt.hist(jets_gen_output_data[:,1], bins=100, range=[0, 3000], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
+                etainp = np.histogram(jets_input_data[:,3], bins=100, range = [-3,3])[0]
+                etaout = np.histogram(jets_output_data[:,3], bins=100, range = [-3,3])[0]
+                etagen = np.histogram(jets_gen_output_data[:,3], bins=100, range = [-3,3])[0]
 
-                einp, bins, _ = plt.hist(jets_input_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                eout = plt.hist(jets_output_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                einp, bins, _ = plt.hist(jets_input_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                egen= plt.hist(jets_gen_output_data[:,2], bins=100, range = [200,4000], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                etainp, bins, _ = plt.hist(jets_input_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                etaout = plt.hist(jets_output_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                etainp, bins, _ = plt.hist(jets_input_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                etagen = plt.hist(jets_gen_output_data[:,3], bins=80, range = [-3,3], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                phiinp, bins, _ = plt.hist(jets_input_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                phiout = plt.hist(jets_output_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Output Test VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
-
-                phiinp, bins, _ = plt.hist(jets_input_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Input Test', color = spdred, linewidth=1.5)
-                phigen = plt.hist(jets_gen_output_data[:,4], bins=80, range=[-3,3], histtype = 'step', density=False, label='Randomly Generated VAE-NND + Penalty (pt,mass)', color = 'black', linewidth=1.5)
-                plt.clf()
+                phiinp = np.histogram(jets_input_data[:,4], bins=100, range=[-3,3])[0]
+                phiout = np.histogram(jets_output_data[:,4], bins=100, range=[-3,3])[0]
+                phigen = np.histogram(jets_gen_output_data[:,4], bins=100, range=[-3,3])[0]
 
                 minp = (minp/minp.sum()) + 0.000000000001
                 ptinp = (ptinp/ptinp.sum()) + 0.000000000001
