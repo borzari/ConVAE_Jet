@@ -26,7 +26,7 @@ plt.style.use(mhep.style.CMS)
 
 torch.autograd.set_detect_anomaly(True)
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 turnPtOnEpoch = configs['training']['turn_pt_on_epoch']
 turnPtOnBool = configs['training']['turn_pt_on_bool']
@@ -92,12 +92,13 @@ class ConvNet(nn.Module):
         self.conv1 = nn.Conv2d(1, 1 * self.n_filter, kernel_size=(self.num_features,5), stride=(1), padding=(0))
         self.conv2 = nn.Conv2d(1 * self.n_filter, 2 * self.n_filter, kernel_size=(1,5), stride=(1), padding=(0))
         self.conv3 = nn.Conv2d(2 * self.n_filter, 4 * self.n_filter, kernel_size=(1,5), stride=(1), padding=(0))
-        #
+
         self.fc1 = nn.Linear(1 * int(self.num_particles - 12) * 4 * self.n_filter, 1500)
         self.fc2 = nn.Linear(1500, 2 * self.latent_dim)
         #
         self.fc3 = nn.Linear(self.latent_dim, 1500)
         self.fc4 = nn.Linear(1500, 1 * int(self.num_particles - 12) * 4*self.n_filter)
+        
         self.conv4 = nn.ConvTranspose2d(4 * self.n_filter, 2 * self.n_filter, kernel_size=(1,5), stride=(1), padding=(0))
         self.conv5 = nn.ConvTranspose2d(2 * self.n_filter, 1 * self.n_filter, kernel_size=(1,5), stride=(1), padding=(0))
         self.conv6 = nn.ConvTranspose2d(1 * self.n_filter, 1, kernel_size=(self.num_features,5), stride=(1), padding=(0))

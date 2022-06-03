@@ -32,7 +32,7 @@ from core.utils.utils import *
 from core.models.vae import *
 from core.data.data import *
 
-device = torch.device("cuda:1" if torch.cuda.is_available() else "cpu")
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
 def parse_args():
     """Parse arguments."""
@@ -125,6 +125,7 @@ def main():
         # Initialize model and load it on GPU
         model = ConvNet(configs, dataT.tr_max, dataT.tr_min)
         model = model.to(device)
+        print(model)
 
         # Optimizer
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -426,29 +427,22 @@ def main():
                 minp = np.histogram(jets_input_data[:,0], bins=100, range = [0, 400])[0]
                 mout = np.histogram(jets_output_data[:,0], bins=100, range=[0, 400])[0]
                 mgen = np.histogram(jets_gen_output_data[:,0], bins=100, range = [0, 400])[0]
-                #plt.clf()
-
-                print(minp.shape,mout.shape)
 
                 ptinp = np.histogram(jets_input_data[:,1], bins=100, range=[0, 3000])[0]
                 ptout = np.histogram(jets_output_data[:,1], bins=100, range=[0, 3000])[0]
                 ptgen = np.histogram(jets_gen_output_data[:,1], bins=100, range=[0, 3000])[0]
-                #plt.clf()
 
                 einp = np.histogram(jets_input_data[:,2], bins=100, range = [200,4000])[0]
                 eout = np.histogram(jets_output_data[:,2], bins=100, range = [200,4000])[0]
                 egen = np.histogram(jets_gen_output_data[:,2], bins=100, range = [200,4000])[0]
-                #plt.clf()
 
                 etainp = np.histogram(jets_input_data[:,3], bins=100, range = [-3,3])[0]
                 etaout = np.histogram(jets_output_data[:,3], bins=100, range = [-3,3])[0]
                 etagen = np.histogram(jets_gen_output_data[:,3], bins=100, range = [-3,3])[0]
-                #plt.clf()
 
                 phiinp = np.histogram(jets_input_data[:,4], bins=100, range=[-3,3])[0]
                 phiout = np.histogram(jets_output_data[:,4], bins=100, range=[-3,3])[0]
                 phigen = np.histogram(jets_gen_output_data[:,4], bins=100, range=[-3,3])[0]
-                #plt.clf()
 
                 minp = (minp/minp.sum()) + 0.000000000001
                 ptinp = (ptinp/ptinp.sum()) + 0.000000000001
