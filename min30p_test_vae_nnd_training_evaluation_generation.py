@@ -125,7 +125,6 @@ def main():
         # Initialize model and load it on GPU
         model = ConvNet(configs, dataT.tr_max, dataT.tr_min)
         model = model.to(device)
-        print(model)
 
         # Optimizer
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
