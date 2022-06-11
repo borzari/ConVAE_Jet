@@ -104,3 +104,53 @@ def part_flatten(jet):
     jet_flat = np.stack((jetx,jety,jetz),axis=1)
     # jet_flat has shape (num_jets*num_particles, num_features)
     return jet_flat
+
+
+def rmse(s, o):
+    """
+        Root Mean-squared error
+
+
+        input:
+        s: simulated
+        o: observed
+    output:
+        rmse: root mean-squared error
+    """
+    rmse = np.sqrt(np.mean((o - s) ** 2))
+    return rmse
+
+
+def index_agreement(s, o):
+    """
+        index of agreement
+
+        Willmott (1981, 1982)
+        input:
+        s: simulated
+        o: observed
+    output:
+        ia: index of agreement
+    """
+    ia = 1 - (np.sum((o - s) ** 2)) / (
+        np.sum((np.abs(s - np.mean(o)) + np.abs(o - np.mean(o))) ** 2)
+    )
+    return ia
+
+
+def index_agreement_torch(s: torch.Tensor, o: torch.Tensor) -> torch.Tensor:
+    """
+        index of agreement
+
+        Willmott (1981, 1982)
+        input:
+        s: simulated
+        o: observed
+    output:
+        ia: index of agreement
+    """
+    ia = 1 - (torch.sum((o - s) ** 2)) / (
+        torch.sum((torch.abs(s - torch.mean(o)) + torch.abs(o - torch.mean(o))) ** 2)
+    )
+
+    return ia
