@@ -51,12 +51,10 @@ def parse_args():
 
     return args
 
-
 args = parse_args()
 
 # load configurations of model and others
 configs = json.load(open(args.config, 'r'))
-
 
 tr_max, tr_min = [],[]
 
@@ -77,31 +75,31 @@ class DataT():
         # Hyperparameters
         # Input data specific params
         self.num_particles = configs['physics']['num_particles']
-        self.jet_type = configs['physics']['jet_type']
+        #self.jet_type = configs['physics']['jet_type']
 
         # Training params
-        self.n_epochs = configs['training']['n_epochs']
+        #self.n_epochs = configs['training']['n_epochs']
         self.batch_size = trial.suggest_int('batch_size', configs['training']['batch_size_min'],configs['training']['batch_size_max'])
         #self.n_filter = configs['training']['n_filter']
-        self.n_classes = configs['training']['n_classes']
-        self.latent_dim_seq = [configs['training']['latent_dim_seq']]
+        #self.n_classes = configs['training']['n_classes']
+        #self.latent_dim_seq = [configs['training']['latent_dim_seq']]
         #self.latent_dim = configs['training']['latent_dim']
-        self.beta = trial.suggest_float("beta", configs['training']['beta_min'], configs['training']['beta_max'])
+        #self.beta = trial.suggest_float("beta", configs['training']['beta_min'], configs['training']['beta_max'])
         self.num_features = configs['training']['num_features']
-        self.vae_mode = configs['training']['vae_mode']
-        self.dataset_description = configs['data']['dataset_description']
+        #self.vae_mode = configs['training']['vae_mode']
+        #self.dataset_description = configs['data']['dataset_description']
         self.normalize = configs['data']['normalize']
 
         # Regularizer for loss penalty
         # Jet features loss weighting
-        self.gamma = trial.suggest_float("gamma", configs['training']['gamma_min'], configs['training']['gamma_max'])
+        #self.gamma = trial.suggest_float("gamma", configs['training']['gamma_min'], configs['training']['gamma_max'])
         #self.gamma_1 = trial.suggest_float("gamma_1", configs['training']['gamma_1_min'], configs['training']['gamma_1_max'])
         #self.gamma_2 = trial.suggest_float("gamma_2", configs['training']['gamma_2_min'], configs['training']['gamma_2_max'])
         #gamma_2 = 1.0
-        n = 0 # this is to count the epochs to turn on/off the jet pt contribution to the loss
+        #n = 0 # this is to count the epochs to turn on/off the jet pt contribution to the loss
 
         # Particle features loss weighting
-        self.alpha = trial.suggest_float("alpha", configs['training']['alpha_min'], configs['training']['alpha_max'])
+        #self.alpha = trial.suggest_float("alpha", configs['training']['alpha_min'], configs['training']['alpha_max'])
 
         self.train_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['train_dataset']))
         self.valid_dataset = torch.load(os.path.join(configs['paths']['dataset_dir'], configs['data']['valid_dataset']))
@@ -109,7 +107,6 @@ class DataT():
 
         # This calculates the value of gamma_2 using the ratio between the pt and the mass of the jets, with the datasets of 150p
         self.gamma_1 = 1.0
-        print(self.train_dataset.shape)
         px_aux = self.train_dataset[:,0]
         py_aux = self.train_dataset[:,1]
         pz_aux = self.train_dataset[:,2]
@@ -131,9 +128,9 @@ class DataT():
         self.valid_dataset = self.valid_dataset[:int(len(self.valid_dataset)*configs['data']['data_percentage'])]
         self.test_dataset = self.test_dataset[:int(len(self.test_dataset)*configs['data']['data_percentage'])]
 
-        self.train_dataset = self.train_dataset[:,:,:num_particles]
-        self.valid_dataset = self.valid_dataset[:,:,:num_particles]
-        self.test_dataset = self.test_dataset[:,:,:num_particles]
+        self.train_dataset = self.train_dataset[:,:,:self.num_particles]
+        self.valid_dataset = self.valid_dataset[:,:,:self.num_particles]
+        self.test_dataset = self.test_dataset[:,:,:self.num_particles]
 
         self.train_dataset = self.train_dataset.view(len(self.train_dataset),1,self.num_features, self.num_particles)
         self.valid_dataset = self.valid_dataset.view(len(self.valid_dataset),1,self.num_features, self.num_particles)
@@ -169,7 +166,6 @@ class DataT():
         gen_loader = DataLoader(dataset=self.gen_dataset, batch_size=self.batch_size, shuffle=False)
 
         return train_loader, valid_loader, test_loader, gen_loader
-
 
     ###### fim classe ##########
 

@@ -55,9 +55,6 @@ class ConvNet(nn.Module):
         #self.latent_dim = configs['training']['latent_dim']
         self.latent_dim = trial.suggest_int('latent_dim', configs['training']['latent_dim_min'],configs['training']['latent_dim_max'],step=10)
 
-        print("num_features: "+str(self.num_features))
-        print("latent_dim: "+str(self.latent_dim))
-
         self.num_particles = configs['physics']['num_particles']
         self.jet_type = configs['physics']['jet_type']
 
@@ -81,9 +78,14 @@ class ConvNet(nn.Module):
         #self.gamma_1 = trial.suggest_float("gamma_1", configs['training']['gamma_1_min'], configs['training']['gamma_1_max'])
         #self.gamma_2 = trial.suggest_float("gamma_2", configs['training']['gamma_2_min'], configs['training']['gamma_2_max'])
         #gamma_2 = 1.0
-        dataT = DataT()
+
+        dataT = DataT(trial)
+
         gamma_1 = dataT.gamma_1
         gamma_2 = dataT.gamma_2
+
+        print("Gamma_1 and gamma_2 are, respectively: {} and {}".format(gamma_1,gamma_2))
+
         self.gamma_1 = trial.suggest_float("gamma_1", gamma_1 * 0.8, gamma_1 * 1.2)
         self.gamma_2 = trial.suggest_float("gamma_2", gamma_2 * 0.8, gamma_2 * 1.2)
         n = 0 # this is to count the epochs to turn on/off the jet pt contribution to the loss
