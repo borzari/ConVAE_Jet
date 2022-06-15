@@ -120,6 +120,9 @@ def objective(trial):
 
         #receber latent_dim
 
+        # If this value equals 0 after the training ends, the .csv file shall be deleted
+        pruned_epoch = 0
+
         #################### create loaders ######################
         train_loader, valid_loader, test_loader, gen_loader = dataT.create_loaders()
 
@@ -167,6 +170,8 @@ def objective(trial):
         for epoch in range(n_epochs):
 
             n=n+1
+
+            pruned_epoch = epoch
 
             x_graph.append(epoch)
             y_graph.append(epoch)
@@ -517,7 +522,7 @@ def objective(trial):
                 emdg_sum = float(emdg_m + emdg_pt + emdg_e + emdg_eta + emdg_phi)
 
                 # Write the EMDs and IoAs in the csv
-                row = [epoch, emdg_m, emdg_pt, emdg_e, emdg_eta, emdg_phi, emdg_sum, ioag_m, ioag_pt, ioag_e, ioag_eta, ioag_phi, ioag_sum]
+                row = [str(epoch+1), str(emdg_m), str(emdg_pt), str(emdg_e), str(emdg_eta), str(emdg_phi), str(emdg_sum), str(ioag_m), str(ioag_pt), str(ioag_e), str(ioag_eta), str(ioag_phi), str(ioag_sum)]
                 writer.writerow(row)
 
                 if emd:
@@ -568,12 +573,15 @@ def objective(trial):
 
         f.close()
 
+        if pruned_epoch == 0: os.remove(f"{date}_emd_ioa.csv")
+
         #return max_accuracy
         if emd: return min_emdg
         else: return max_ioag
         
     except (RuntimeError, TypeError, NameError):
-        return 1.
+        if emd: return 1.
+        else: return 0.
 
 def main():
     args = parse_args()
@@ -594,7 +602,7 @@ def main():
     #storage='mysql://usr_optuna:sY8d%5kq@top01/db_optuna',
     #load_if_exists=True,
     #direction="minimize")
-    study = optuna.create_study(study_name='opt_update10',
+    study = optuna.create_study(study_name='opt_update12',
                            storage='sqlite:///test_optim.db',
                            load_if_exists=True,
                            direction=direction)
