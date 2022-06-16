@@ -105,8 +105,12 @@ def objective(trial):
         # Get time stamp for csv file name
         date = datetime.now().strftime("%Y_%m_%d-%I:%M:%S_%p")
 
+        aux_emd = ""
+        if emd: aux_emd = "emd"
+        else: aux_emd = "ioa"
+
         # Create a .csv to write the emd and ioa vaules
-        f = open(f"{date}_emd_ioa.csv",'w')
+        f = open(f"{date}_{aux_emd}.csv",'w')
         writer = csv.writer(f)
 
         header = ["Epoch", "EMD_m", "EMD_pt", "EMD_e", "EMD_eta", "EMD_phi", "EMD_sum", "IoA_m", "IoA_pt", "IoA_e", "IoA_eta", "IoA_phi", "IoA_sum"]
@@ -129,14 +133,15 @@ def objective(trial):
         output_tensor_emdt = torch.Tensor()
         output_tensor_emdg = torch.Tensor()
 
-        device = torch.device(get_free_gpu())
+        #device = torch.device(get_free_gpu())
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         ###################################### TRAINING #######################################
         # Initialize model and load it on GPU
         model = ConvNet(configs, dataT.tr_max, dataT.tr_min, trial)
         #model = model.cuda()
         model = model.to(device)
-        print(model)
+        #print(model)
 
         # Optimizer
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
@@ -573,15 +578,16 @@ def objective(trial):
 
         f.close()
 
-        if pruned_epoch == 0: os.remove(f"{date}_emd_ioa.csv")
+        if (pruned_epoch+1) < saving_epoch: os.remove(f"{date}_{aux_emd}.csv")
 
         #return max_accuracy
         if emd: return min_emdg
         else: return max_ioag
         
     except (RuntimeError, TypeError, NameError):
-        if emd: return 1.
-        else: return 0.
+        #if emd: return 1.
+        #else: return 0.
+        raise optuna.exceptions.TrialPruned()
 
 def main():
     args = parse_args()
@@ -592,20 +598,20 @@ def main():
     emd = configs['training']['emd']
 
     direction = ""
-    if emd: direction = "maximize"
-    else: direction = "minimize"
+    if emd: direction = "minimize"
+    else: direction = "maximize"
 
     print(direction)
 
-    #study = optuna.create_study(
-    #study_name='opt_convae_updates',
-    #storage='mysql://usr_optuna:sY8d%5kq@top01/db_optuna',
-    #load_if_exists=True,
-    #direction="minimize")
-    study = optuna.create_study(study_name='opt_update12',
-                           storage='sqlite:///test_optim.db',
-                           load_if_exists=True,
-                           direction=direction)
+    study = optuna.create_study(
+    study_name='opt_convae_IoAfullds_v2',
+    storage='mysql://usr_optuna:sY8d%5kq@top01/db_optuna',
+    load_if_exists=True,
+    direction=direction)
+    #study = optuna.create_study(study_name='opt_IoA_fullds',
+    #                       storage='sqlite:///test_optim.db',
+    #                       load_if_exists=True,
+    #                       direction=direction)
     study.optimize(objective, n_trials=None, timeout=None)
 
     pruned_trials = study.get_trials(deepcopy=False, states=[TrialState.PRUNED])
